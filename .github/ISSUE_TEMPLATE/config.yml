@@ -1,0 +1,6 @@
+# Issues for KNX Monitor live in one place: regetskcob/KNX-Monitor.
+blank_issues_enabled: false
+contact_links:
+  - name: Bugs and wishes / Fehler und Wünsche
+    url: https://github.com/regetskcob/KNX-Monitor/issues
+    about: Please report everything about KNX Monitor and this integration there.

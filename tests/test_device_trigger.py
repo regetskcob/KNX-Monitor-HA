@@ -16,7 +16,7 @@ async def test_triggers_listed_and_fire(hass: HomeAssistant, entry, addon) -> No
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
-    device = dr.async_get(hass).async_get_device_by_identifier((DOMAIN, DOMAIN), entry.entry_id)
+    device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
     triggers = await async_get_device_automations(hass, DeviceAutomationType.TRIGGER, device.id)
     types = {t["type"] for t in triggers}
     assert {"watcher_fired", "alarm_on", "fault_off", "bus_disconnected"} <= types

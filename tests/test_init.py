@@ -35,7 +35,7 @@ async def test_entities_and_takeover(hass: HomeAssistant, entry, addon) -> None:
     alarm = hass.states.get("sensor.knx_monitor_last_alarm")
     assert alarm.state == "Wind"
     assert alarm.attributes["address"] == "8/1/1"
-    device = dr.async_get(hass).async_get_device_by_identifier((DOMAIN, DOMAIN), entry.entry_id)
+    device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
     assert device.sw_version == "1.9.7"
     assert device.configuration_url == "homeassistant://hassio/ingress/2541da37_knx_monitor"
 
