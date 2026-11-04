@@ -1,6 +1,9 @@
 {
   "domain": "knx_monitor",
   "name": "KNX Monitor",
+  "after_dependencies": [
+    "hassio"
+  ],
   "codeowners": [
     "@regetskcob"
   ],
