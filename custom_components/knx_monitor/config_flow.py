@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.hassio import is_hassio
 from homeassistant.helpers.service_info.hassio import HassioServiceInfo
 
 from .api import KnxMonitorApi, KnxMonitorError
@@ -22,18 +23,31 @@ class KnxMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
         self._discovery: dict[str, Any] = {}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Without the add-on there is nothing to set up."""
-        return self.async_abort(reason="addon_required")
+        """Added by hand: take the running add-on's announcement, if there is one."""
+        if not is_hassio(self.hass):
+            return self.async_abort(reason="addon_required")
+        try:
+            from homeassistant.components.hassio import get_supervisor_client
+
+            messages = await get_supervisor_client(self.hass).discovery.list()
+        except Exception:  # noqa: BLE001 - Supervisor not ready or too old: same hint
+            return self.async_abort(reason="addon_required")
+        message = next((m for m in messages if m.service == DOMAIN), None)
+        if message is None:
+            return self.async_abort(reason="addon_required")
+        return await self._discovered(message.config, message.addon)
 
     async def async_step_hassio(self, discovery_info: HassioServiceInfo) -> ConfigFlowResult:
         """The KNX Monitor add-on announced itself."""
-        config = discovery_info.config
+        return await self._discovered(discovery_info.config, discovery_info.slug)
+
+    async def _discovered(self, config: dict[str, Any], slug: str) -> ConfigFlowResult:
         self._discovery = {
             CONF_HOST: config["host"],
             CONF_PORT: int(config["port"]),
             CONF_TOKEN: config["token"],
             # Add-on slug with the repository prefix, for the link to its panel.
-            CONF_SLUG: discovery_info.slug,
+            CONF_SLUG: slug,
         }
         await self.async_set_unique_id(DOMAIN)
         # Add-on reinstalled (new token) or moved: update the existing entry.

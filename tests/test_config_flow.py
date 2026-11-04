@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
@@ -46,6 +49,24 @@ async def test_user_step_needs_the_add_on(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "addon_required"
+
+
+async def test_user_step_takes_the_add_on_announcement(hass: HomeAssistant, aioclient_mock) -> None:
+    """Added by hand while the add-on runs: same as the discovery."""
+    aioclient_mock.get(f"{BASE}/api/ha/state", json=addon_state())
+    message = SimpleNamespace(
+        service="knx_monitor", addon="2541da37_knx_monitor", config={"host": "127.0.0.1", "port": 8765, "token": TOKEN}
+    )
+    client = SimpleNamespace(discovery=SimpleNamespace(list=AsyncMock(return_value=[message])))
+    with (
+        patch("custom_components.knx_monitor.config_flow.is_hassio", return_value=True),
+        patch("homeassistant.components.hassio.get_supervisor_client", return_value=client),
+    ):
+        result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
+        assert result["step_id"] == "hassio_confirm"
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"]["slug"] == "2541da37_knx_monitor"
 
 
 async def test_rediscovery_updates_token(hass: HomeAssistant, entry, addon) -> None:
