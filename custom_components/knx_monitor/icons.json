@@ -1,0 +1,20 @@
+{
+  "entity": {
+    "sensor": {
+      "telegrams_per_minute": { "default": "mdi:swap-horizontal" },
+      "repeats_per_minute": { "default": "mdi:repeat" },
+      "telegrams_today": { "default": "mdi:counter" },
+      "bus_load": { "default": "mdi:gauge" },
+      "open_alarms": { "default": "mdi:alarm-light" },
+      "last_alarm": { "default": "mdi:alert" },
+      "availability_24h": { "default": "mdi:lan-check" }
+    },
+    "switch": {
+      "recording": { "default": "mdi:record-rec" }
+    }
+  },
+  "services": {
+    "create_report": { "service": "mdi:file-document-outline" },
+    "export_history": { "service": "mdi:file-export-outline" }
+  }
+}

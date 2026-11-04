@@ -1,0 +1,129 @@
+{
+  "config": {
+    "step": {
+      "hassio_confirm": {
+        "title": "KNX-Monitor-Add-on gefunden",
+        "description": "Das KNX-Monitor-Add-on als Gerät einrichten? Es bringt dann Sensoren, den Schalter für die Aufzeichnung, Geräte-Auslöser, Dienste, Diagnose und Reparaturhinweise. Solange die Integration eingerichtet ist, kündigt das Add-on dieselben Entitäten nicht mehr über MQTT an."
+      }
+    },
+    "error": {
+      "cannot_connect": "Das KNX-Monitor-Add-on antwortet nicht. Läuft es?"
+    },
+    "abort": {
+      "already_configured": "KNX Monitor ist schon eingerichtet.",
+      "addon_required": "KNX Monitor wird über sein Add-on eingerichtet: Installiere und starte das KNX-Monitor-Add-on, dann bietet Home Assistant die Integration von selbst an.",
+      "single_instance_allowed": "KNX Monitor ist schon eingerichtet."
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "watcher_fired": "Ein Wächter hat ausgelöst",
+      "alarm_on": "Alarm an",
+      "alarm_off": "Alarm aus",
+      "fault_on": "Störung an",
+      "fault_off": "Störung aus",
+      "bus_connected": "Bus verbunden",
+      "bus_disconnected": "Busverbindung verloren"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "bus_connected": {
+        "name": "Bus verbunden"
+      },
+      "low_space": {
+        "name": "Speicher knapp"
+      }
+    },
+    "sensor": {
+      "telegrams_per_minute": {
+        "name": "Telegramme pro Minute"
+      },
+      "repeats_per_minute": {
+        "name": "Wiederholungen pro Minute"
+      },
+      "telegrams_today": {
+        "name": "Telegramme heute"
+      },
+      "last_telegram": {
+        "name": "Letztes Telegramm"
+      },
+      "bus_load": {
+        "name": "Buslast"
+      },
+      "open_alarms": {
+        "name": "Offene Alarme"
+      },
+      "last_alarm": {
+        "name": "Letzter Alarm",
+        "state_attributes": {
+          "kind": {
+            "name": "Art",
+            "state": {
+              "alarm": "Alarm",
+              "fault": "Störung"
+            }
+          },
+          "address": {
+            "name": "Adresse"
+          },
+          "time": {
+            "name": "Zeit"
+          }
+        }
+      },
+      "last_alarm_time": {
+        "name": "Letzter Alarm (Zeit)"
+      },
+      "availability_24h": {
+        "name": "Verfügbarkeit 24 h"
+      },
+      "history_size": {
+        "name": "Verlauf belegt"
+      },
+      "free_space": {
+        "name": "Freier Speicher"
+      }
+    },
+    "switch": {
+      "recording": {
+        "name": "Aufzeichnung"
+      }
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "KNX Monitor ist nicht eingerichtet oder das Add-on läuft nicht."
+    }
+  },
+  "issues": {
+    "bus_disconnected": {
+      "title": "KNX-Bus nicht verbunden",
+      "description": "Das KNX-Monitor-Add-on hat seit {since} keine Verbindung zum Bus und zeichnet nichts auf. Prüfe das Gateway oder die Verbindung im Add-on (KNX Monitor in der Seitenleiste)."
+    },
+    "low_space": {
+      "title": "KNX Monitor: Aufzeichnung pausiert, Speicher voll",
+      "description": "Der Speicher ist fast voll. Das Add-on hat die ältesten Tage schon gelöscht und die Aufzeichnung pausiert. Schaffe Platz oder verkürze die Aufbewahrung in KNX Monitor; die Aufzeichnung läuft dann von selbst weiter."
+    }
+  },
+  "services": {
+    "create_report": {
+      "name": "Bericht erstellen",
+      "description": "Erstellt jetzt den Anlagenbericht des KNX-Monitor-Add-ons und gibt ihn zurück."
+    },
+    "export_history": {
+      "name": "Verlauf exportieren",
+      "description": "Speichert den Verlauf des KNX-Monitor-Add-ons als Gruppenmonitor-Datei der ETS im Ordner knx_monitor der Konfiguration. SpectrumKNX und die ETS lesen sie.",
+      "fields": {
+        "days": {
+          "name": "Tage",
+          "description": "Heute und die Tage davor, höchstens 31."
+        },
+        "everything": {
+          "name": "Alles",
+          "description": "Der ganze Verlauf als ZIP mit einer Datei pro Tag, statt der Tage oben."
+        }
+      }
+    }
+  }
+}

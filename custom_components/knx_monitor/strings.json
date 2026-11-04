@@ -1,0 +1,129 @@
+{
+  "config": {
+    "step": {
+      "hassio_confirm": {
+        "title": "KNX Monitor add-on found",
+        "description": "Set up the KNX Monitor add-on as a device? It then provides sensors, the recording switch, device triggers, services, diagnostics and repairs. The add-on stops announcing the same entities over MQTT while the integration is set up."
+      }
+    },
+    "error": {
+      "cannot_connect": "The KNX Monitor add-on does not answer. Is it running?"
+    },
+    "abort": {
+      "already_configured": "KNX Monitor is already set up.",
+      "addon_required": "KNX Monitor is set up through its add-on: install and start the KNX Monitor add-on, then Home Assistant offers the integration by itself.",
+      "single_instance_allowed": "KNX Monitor is already set up."
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "watcher_fired": "A watcher fired",
+      "alarm_on": "Alarm on",
+      "alarm_off": "Alarm off",
+      "fault_on": "Fault on",
+      "fault_off": "Fault off",
+      "bus_connected": "Bus connected",
+      "bus_disconnected": "Bus connection lost"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "bus_connected": {
+        "name": "Bus connected"
+      },
+      "low_space": {
+        "name": "Low space"
+      }
+    },
+    "sensor": {
+      "telegrams_per_minute": {
+        "name": "Telegrams per minute"
+      },
+      "repeats_per_minute": {
+        "name": "Repeats per minute"
+      },
+      "telegrams_today": {
+        "name": "Telegrams today"
+      },
+      "last_telegram": {
+        "name": "Last telegram"
+      },
+      "bus_load": {
+        "name": "Bus load"
+      },
+      "open_alarms": {
+        "name": "Open alarms"
+      },
+      "last_alarm": {
+        "name": "Last alarm",
+        "state_attributes": {
+          "kind": {
+            "name": "Kind",
+            "state": {
+              "alarm": "Alarm",
+              "fault": "Fault"
+            }
+          },
+          "address": {
+            "name": "Address"
+          },
+          "time": {
+            "name": "Time"
+          }
+        }
+      },
+      "last_alarm_time": {
+        "name": "Last alarm time"
+      },
+      "availability_24h": {
+        "name": "Availability 24 h"
+      },
+      "history_size": {
+        "name": "History size"
+      },
+      "free_space": {
+        "name": "Free space"
+      }
+    },
+    "switch": {
+      "recording": {
+        "name": "Recording"
+      }
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "KNX Monitor is not set up or the add-on is not running."
+    }
+  },
+  "issues": {
+    "bus_disconnected": {
+      "title": "KNX bus not connected",
+      "description": "The KNX Monitor add-on has had no bus connection since {since}, so nothing is being recorded. Check the gateway or the connection in the add-on (KNX Monitor in the sidebar)."
+    },
+    "low_space": {
+      "title": "KNX Monitor: recording paused, disk full",
+      "description": "The disk is almost full. The add-on already removed the oldest days and has paused the recording. Free up space or shorten the retention in KNX Monitor; the recording continues by itself."
+    }
+  },
+  "services": {
+    "create_report": {
+      "name": "Create report",
+      "description": "Creates the installation report of the KNX Monitor add-on now and returns it."
+    },
+    "export_history": {
+      "name": "Export history",
+      "description": "Saves the history of the KNX Monitor add-on as ETS group monitor file in the folder knx_monitor of the configuration. SpectrumKNX and the ETS read it.",
+      "fields": {
+        "days": {
+          "name": "Days",
+          "description": "Today and the days before it, at most 31."
+        },
+        "everything": {
+          "name": "Everything",
+          "description": "The whole history as zip with one file per day, instead of the days above."
+        }
+      }
+    }
+  }
+}
