@@ -2,16 +2,21 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
+from unittest.mock import patch
 
+import pytest
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Context, HomeAssistant
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError, Unauthorized
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.components.diagnostics import get_diagnostics_for_config_entry
 
+from custom_components.knx_monitor import services
 from custom_components.knx_monitor.const import DOMAIN
 
 from .conftest import BASE, TOKEN, addon_state
@@ -89,6 +94,75 @@ async def test_services(hass: HomeAssistant, entry, addon, tmp_path) -> None:
     result = await hass.services.async_call(DOMAIN, "export_history", {"days": 1}, blocking=True, return_response=True)
     assert result["path"].endswith("knx_monitor/knx-monitor-2026-11-04-2026-11-04.xml")
     assert (tmp_path / "knx_monitor" / "knx-monitor-2026-11-04-2026-11-04.xml").read_text().startswith("<?xml")
+    assert result["bytes"] == len("<?xml version='1.0'?><CommunicationLog/>")
+    assert not list((tmp_path / "knx_monitor").glob("*.part"))
+
+
+@pytest.mark.parametrize(("service", "data"), [("create_report", {}), ("export_history", {"days": 1})])
+async def test_services_only_for_admins(
+    hass: HomeAssistant, entry, addon, hass_read_only_user, service: str, data: dict
+) -> None:
+    """The report and the history name the whole installation: administrators only."""
+    await _setup(hass, entry)
+    with pytest.raises(Unauthorized):
+        await hass.services.async_call(
+            DOMAIN, service, data, blocking=True, return_response=True, context=Context(user_id=hass_read_only_user.id)
+        )
+    assert not any(str(u).endswith(("/api/ha/report", "/api/ha/history")) for _, u, *_ in addon.mock_calls)
+
+
+async def test_export_too_large_is_aborted(hass: HomeAssistant, entry, addon, tmp_path) -> None:
+    addon.get(
+        f"{BASE}/api/ha/history",
+        content=b"x" * 5000,
+        headers={"Content-Disposition": 'attachment; filename="knx-monitor-history.zip"'},
+    )
+    hass.config.config_dir = str(tmp_path)
+    await _setup(hass, entry)
+    with (
+        patch.object(services, "MAX_EXPORT_BYTES", 3000),
+        patch.object(services, "CHUNK_BYTES", 1024),
+        pytest.raises(HomeAssistantError) as err,
+    ):
+        await hass.services.async_call(
+            DOMAIN, "export_history", {"everything": True}, blocking=True, return_response=True
+        )
+    assert err.value.translation_key == "export_too_large"
+    # Neither the partial file nor a truncated export stays behind.
+    assert list((tmp_path / "knx_monitor").iterdir()) == []
+
+
+async def test_export_announced_too_large_is_refused(hass: HomeAssistant, entry, addon, tmp_path) -> None:
+    addon.get(f"{BASE}/api/ha/history", content=b"x", headers={"Content-Length": str(600 * 1024 * 1024)})
+    hass.config.config_dir = str(tmp_path)
+    await _setup(hass, entry)
+    with pytest.raises(HomeAssistantError) as err:
+        await hass.services.async_call(DOMAIN, "export_history", {"days": 2}, blocking=True, return_response=True)
+    assert err.value.translation_key == "export_too_large"
+    assert not (tmp_path / "knx_monitor").exists()
+
+
+async def test_only_one_export_at_a_time(hass: HomeAssistant, entry, addon, tmp_path) -> None:
+    hass.config.config_dir = str(tmp_path)
+    await _setup(hass, entry)
+    started = asyncio.Event()
+    release = asyncio.Event()
+
+    async def slow(*args):
+        started.set()
+        await release.wait()
+        return {"path": "x", "bytes": 0}
+
+    with patch.object(services, "_download", side_effect=slow):
+        first = hass.async_create_task(
+            hass.services.async_call(DOMAIN, "export_history", {"days": 1}, blocking=True, return_response=True)
+        )
+        await started.wait()
+        with pytest.raises(ServiceValidationError) as err:
+            await hass.services.async_call(DOMAIN, "export_history", {"days": 1}, blocking=True, return_response=True)
+        assert err.value.translation_key == "export_running"
+        release.set()
+        assert (await first)["bytes"] == 0
 
 
 async def test_diagnostics_without_token_and_names(hass: HomeAssistant, hass_client, entry, addon) -> None:

@@ -12,7 +12,8 @@
     "abort": {
       "already_configured": "KNX Monitor ist schon eingerichtet.",
       "addon_required": "KNX Monitor wird über sein Add-on eingerichtet: Installiere und starte das KNX-Monitor-Add-on, dann bietet Home Assistant die Integration von selbst an.",
-      "single_instance_allowed": "KNX Monitor ist schon eingerichtet."
+      "single_instance_allowed": "KNX Monitor ist schon eingerichtet.",
+      "not_knx_monitor_addon": "Ein anderes Add-on hat sich als KNX Monitor gemeldet und wurde ignoriert. Nur das KNX-Monitor-Add-on kann diese Integration einrichten."
     }
   },
   "device_automation": {
@@ -94,6 +95,12 @@
   "exceptions": {
     "not_loaded": {
       "message": "KNX Monitor ist nicht eingerichtet oder das Add-on läuft nicht."
+    },
+    "export_too_large": {
+      "message": "Der Export wurde abgebrochen, weil er größer als {limit} MB ist. Exportiere weniger Tage statt alles."
+    },
+    "export_running": {
+      "message": "Ein Export des KNX-Monitor-Verlaufs läuft schon. Warte, bis er fertig ist."
     }
   },
   "issues": {

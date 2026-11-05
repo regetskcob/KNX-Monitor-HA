@@ -20,7 +20,7 @@ Without the add-on running the integration cannot be set up: the add-on hands ov
 - **Sensors:** bus connected, telegrams per minute and today, repeats, bus load, open alarms, last alarm, availability over 24 hours, history size, free space, low space.
 - **Switch:** continuous recording on and off.
 - **Device triggers:** watcher fired, alarm or fault on and off, bus connection lost and back.
-- **Services:** `knx_monitor.create_report` creates the installation report, `knx_monitor.export_history` saves the history as an ETS group monitor file in the `knx_monitor` folder of the configuration (up to 31 days, or everything as a zip).
+- **Services:** `knx_monitor.create_report` creates the installation report, `knx_monitor.export_history` saves the history as an ETS group monitor file in the `knx_monitor` folder of the configuration (up to 31 days, or everything as a zip, at most 500 MB, one export at a time). Both are for administrators only.
 - **Diagnostics** download on the device page, without names, addresses or values.
 - **Repairs** when the bus has been disconnected for more than 10 minutes or recording paused because the disk is full.
 
@@ -61,7 +61,7 @@ Ohne laufendes Add-on lässt sich die Integration nicht einrichten: Das Add-on �
 - **Sensoren:** Bus verbunden, Telegramme pro Minute und heute, Wiederholungen, Buslast, offene Alarme, letzter Alarm, Verfügbarkeit über 24 Stunden, Verlauf belegt, freier Speicher, Speicher knapp.
 - **Schalter:** dauerhafte Aufzeichnung an und aus.
 - **Geräte-Auslöser:** Wächter hat ausgelöst, Alarm oder Störung an und aus, Busverbindung verloren und wieder da.
-- **Dienste:** `knx_monitor.create_report` erstellt den Anlagenbericht, `knx_monitor.export_history` speichert den Verlauf als Gruppenmonitor-Datei der ETS im Ordner `knx_monitor` der Konfiguration (ein Zeitraum bis 31 Tage oder alles als ZIP).
+- **Dienste:** `knx_monitor.create_report` erstellt den Anlagenbericht, `knx_monitor.export_history` speichert den Verlauf als Gruppenmonitor-Datei der ETS im Ordner `knx_monitor` der Konfiguration (ein Zeitraum bis 31 Tage oder alles als ZIP, höchstens 500 MB, ein Export zur Zeit). Beide nur für Administratoren.
 - **Diagnose** zum Herunterladen auf der Geräteseite, ohne Namen, Adressen und Werte.
 - **Reparaturhinweise**, wenn der Bus länger als 10 Minuten getrennt ist oder die Aufzeichnung wegen vollem Speicher pausiert.
 
