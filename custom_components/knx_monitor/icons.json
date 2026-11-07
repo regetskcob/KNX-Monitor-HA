@@ -1,5 +1,9 @@
 {
   "entity": {
+    "event": {
+      "watcher_event": { "default": "mdi:bell-ring" },
+      "alarm_event": { "default": "mdi:alarm-light" }
+    },
     "sensor": {
       "telegrams_per_minute": { "default": "mdi:swap-horizontal" },
       "repeats_per_minute": { "default": "mdi:repeat" },

@@ -25,7 +25,8 @@ class KnxMonitorEntity(CoordinatorEntity[KnxMonitorCoordinator]):
             identifiers={(DOMAIN, DOMAIN)},
             name="KNX Monitor",
             manufacturer=MANUFACTURER,
-            model="Home Assistant add-on",
+            # Set up by hand: a KNX box or a Docker container, opened in the browser.
+            model="Home Assistant add-on" if slug else "KNX box or container",
             sw_version=coordinator.data.get("version"),
-            configuration_url=f"homeassistant://hassio/ingress/{slug}" if slug else None,
+            configuration_url=f"homeassistant://hassio/ingress/{slug}" if slug else f"{coordinator.api.url}/",
         )

@@ -45,6 +45,7 @@ def addon_state(**changes: Any) -> dict[str, Any]:
         "last_lost": None,
         "read_only": True,
         "claimed": False,
+        "silent": 0,
     }
     state.update(changes)
     return state
@@ -61,9 +62,24 @@ def entry() -> MockConfigEntry:
 
 
 @pytest.fixture
+def box_entry() -> MockConfigEntry:
+    """Set up by hand for a KNX box (no add-on slug, no Supervisor events)."""
+    return MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=DOMAIN,
+        title="KNX Monitor",
+        data={"host": "127.0.0.1", "port": 8765, "token": TOKEN, "ssl": False},
+    )
+
+
+WATCHERS = [{"id": "w1", "name": "Fenster Bad offen"}, {"id": "w2", "name": "Wind"}]
+
+
+@pytest.fixture
 def addon(aioclient_mock):
     """The add-on answers with addon_state(); returns the mock for more answers."""
     aioclient_mock.get(f"{BASE}/api/ha/state", json=addon_state())
+    aioclient_mock.get(f"{BASE}/api/ha/watchers", json=WATCHERS)
     aioclient_mock.post(f"{BASE}/api/ha/claim", json={"claimed": True})
     aioclient_mock.delete(f"{BASE}/api/ha/claim", json={"claimed": False})
     return aioclient_mock

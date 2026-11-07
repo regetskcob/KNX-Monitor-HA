@@ -1,11 +1,12 @@
 # KNX Monitor for Home Assistant
 
-Integration for the [KNX Monitor add-on](https://github.com/regetskcob/KNX-Monitor): the add-on becomes the device "KNX Monitor" with sensors, a switch, device triggers, services, diagnostics and repairs, no MQTT broker needed.
+Integration for the [KNX Monitor add-on](https://github.com/regetskcob/KNX-Monitor): the add-on becomes the device "KNX Monitor" with sensors, a switch, event entities, device triggers and conditions, services, diagnostics and repairs, no MQTT broker needed. It also works with a KNX box or the Docker container, without Supervisor.
 
 ## Requirements
 
-- Home Assistant with Supervisor (Home Assistant OS or Supervised), 2025.1 or newer
-- KNX Monitor add-on 1.9.7 or newer
+- Home Assistant 2025.1 or newer
+- With Supervisor (Home Assistant OS or Supervised): KNX Monitor add-on 1.9.7 or newer; per-watcher triggers and the "stopped sending" repair need 1.9.10 or newer
+- Without Supervisor (Home Assistant Container): a KNX box or the Docker container with KNX Monitor 1.9.10 or newer
 
 ## Installation
 
@@ -13,16 +14,25 @@ Integration for the [KNX Monitor add-on](https://github.com/regetskcob/KNX-Monit
 2. Restart Home Assistant.
 3. With the add-on running, Home Assistant shows "New device found: KNX Monitor". Confirm, done.
 
-Without the add-on running the integration cannot be set up: the add-on hands over address and access itself.
+### KNX box or Docker container
+
+1. On the box (or container) open `/pair` in the browser, log in with the box password, tick **Verwalten** (the integration needs a device with admin rights) and create the link. Docker: set `LAN_ACCESS=yes` unless Home Assistant runs on the same host.
+2. *Settings → Devices & services → Add integration → KNX Monitor*. Without the add-on, Home Assistant asks for the address of the box or container (e.g. `knx-box.local` or `192.168.1.20:8765`; empty takes the one from the link) and the pairing link (`knxmonitor://box?url=…&key=…`).
+
+The access key goes only to that address, redirects are not followed. If the box has its own certificate, the link carries its fingerprint: the integration then speaks HTTPS and accepts only that certificate ("Certificate does not match the link" otherwise). Without one the connection is not encrypted. Revoke the device on `/pair` to take the access away.
+
+Event entities and device triggers need the add-on: the box has no way yet to hand its events to Home Assistant. Sensors, switch, conditions, services, diagnostics and repairs work the same.
 
 ## What it adds
 
 - **Sensors:** bus connected, telegrams per minute and today, repeats, bus load, open alarms, last alarm, availability over 24 hours, history size, free space, low space.
 - **Switch:** continuous recording on and off.
-- **Device triggers:** watcher fired, alarm or fault on and off, bus connection lost and back.
+- **Event entities:** watcher and alarm, with the same IDs as on the MQTT device; the logbook shows every firing with its type.
+- **Device triggers:** a watcher fired, one trigger per watcher with its name, alarm or fault on and off, bus connection lost and back.
+- **Device conditions:** bus connected, bus disconnected, recording on, alarm open, low space. They read the integration's own entities and are not met while the add-on is unreachable.
 - **Services:** `knx_monitor.create_report` creates the installation report, `knx_monitor.export_history` saves the history as an ETS group monitor file in the `knx_monitor` folder of the configuration (up to 31 days, or everything as a zip, at most 500 MB, one export at a time). Both are for administrators only.
 - **Diagnostics** download on the device page, without names, addresses or values.
-- **Repairs** when the bus has been disconnected for more than 10 minutes or recording paused because the disk is full.
+- **Repairs** when the bus has been disconnected for more than 10 minutes, recording paused because the disk is full, or a group address that usually sends regularly stopped ("1/2/3 Temperature bathroom stopped sending", from 5 addresses on one summary). "Ignore" tells the add-on to stop reporting it; once the address sends again, the repair goes away and the address is watched again. Nothing is reported while recording is off or the bus is disconnected.
 
 While the integration is set up, the add-on stops announcing the same entities over MQTT. Remove the integration and the MQTT device comes back.
 
@@ -41,12 +51,13 @@ License: GPLv3, like KNX Monitor.
 
 # KNX Monitor für Home Assistant
 
-Integration für das [KNX-Monitor-Add-on](https://github.com/regetskcob/KNX-Monitor): Das Add-on wird zum Gerät „KNX Monitor“ mit Sensoren, Schalter, Geräte-Auslösern, Diensten, Diagnose und Reparaturhinweisen, ganz ohne MQTT-Broker.
+Integration für das [KNX-Monitor-Add-on](https://github.com/regetskcob/KNX-Monitor): Das Add-on wird zum Gerät „KNX Monitor“ mit Sensoren, Schalter, Ereignis-Entitäten, Geräte-Auslösern und -Bedingungen, Diensten, Diagnose und Reparaturhinweisen, ganz ohne MQTT-Broker. Sie geht auch mit einer KNX-Box oder dem Docker-Container, ohne Supervisor.
 
 ## Voraussetzungen
 
-- Home Assistant mit Supervisor (Home Assistant OS oder Supervised), ab 2025.1
-- KNX-Monitor-Add-on ab 1.9.7
+- Home Assistant ab 2025.1
+- Mit Supervisor (Home Assistant OS oder Supervised): KNX-Monitor-Add-on ab 1.9.7; Auslöser je Wächter und der Hinweis „sendet nicht mehr“ ab 1.9.10
+- Ohne Supervisor (Home Assistant Container): KNX-Box oder Docker-Container mit KNX Monitor ab 1.9.10
 
 ## Installation
 
@@ -54,16 +65,25 @@ Integration für das [KNX-Monitor-Add-on](https://github.com/regetskcob/KNX-Moni
 2. Home Assistant neu starten.
 3. Läuft das Add-on, meldet Home Assistant „Neues Gerät gefunden: KNX Monitor“. Bestätigen, fertig.
 
-Ohne laufendes Add-on lässt sich die Integration nicht einrichten: Das Add-on übergibt Adresse und Zugang selbst.
+### KNX-Box oder Docker-Container
+
+1. Auf der Box (oder im Container) `/pair` im Browser öffnen, mit dem Box-Passwort anmelden, **Verwalten** ankreuzen (die Integration braucht ein Gerät mit Admin-Recht) und den Link erzeugen. Docker: `LAN_ACCESS=yes` setzen, außer Home Assistant läuft auf demselben Rechner.
+2. *Einstellungen → Geräte & Dienste → Integration hinzufügen → KNX Monitor*. Ohne Add-on fragt Home Assistant nach der Adresse der Box oder des Containers (z. B. `knx-box.local` oder `192.168.1.20:8765`; leer nimmt die aus dem Link) und nach dem Kopplungslink (`knxmonitor://box?url=…&key=…`).
+
+Der Zugangsschlüssel geht nur an diese Adresse, Weiterleitungen werden nicht befolgt. Hat die Box ein eigenes Zertifikat, steht sein Fingerabdruck im Link: Die Integration spricht dann HTTPS und nimmt nur dieses Zertifikat an (sonst „Zertifikat passt nicht zum Link“). Ohne Zertifikat ist die Verbindung unverschlüsselt. Wer das Gerät auf `/pair` sperrt, nimmt den Zugang weg.
+
+Ereignis-Entitäten und Geräte-Auslöser brauchen das Add-on: Die Box kann ihre Ereignisse noch nicht an Home Assistant übergeben. Sensoren, Schalter, Bedingungen, Dienste, Diagnose und Reparaturhinweise gehen genauso.
 
 ## Was sie bringt
 
 - **Sensoren:** Bus verbunden, Telegramme pro Minute und heute, Wiederholungen, Buslast, offene Alarme, letzter Alarm, Verfügbarkeit über 24 Stunden, Verlauf belegt, freier Speicher, Speicher knapp.
 - **Schalter:** dauerhafte Aufzeichnung an und aus.
-- **Geräte-Auslöser:** Wächter hat ausgelöst, Alarm oder Störung an und aus, Busverbindung verloren und wieder da.
+- **Ereignis-Entitäten:** Wächter und Alarm, mit denselben IDs wie beim MQTT-Gerät; das Logbuch zeigt jede Auslösung mit ihrem Typ.
+- **Geräte-Auslöser:** ein Wächter hat ausgelöst, ein Auslöser je Wächter mit seinem Namen, Alarm oder Störung an und aus, Busverbindung verloren und wieder da.
+- **Geräte-Bedingungen:** Bus ist verbunden, Bus ist getrennt, Aufzeichnung läuft, Alarm offen, Speicher knapp. Sie lesen die eigenen Entitäten und sind nicht erfüllt, solange das Add-on nicht erreichbar ist.
 - **Dienste:** `knx_monitor.create_report` erstellt den Anlagenbericht, `knx_monitor.export_history` speichert den Verlauf als Gruppenmonitor-Datei der ETS im Ordner `knx_monitor` der Konfiguration (ein Zeitraum bis 31 Tage oder alles als ZIP, höchstens 500 MB, ein Export zur Zeit). Beide nur für Administratoren.
 - **Diagnose** zum Herunterladen auf der Geräteseite, ohne Namen, Adressen und Werte.
-- **Reparaturhinweise**, wenn der Bus länger als 10 Minuten getrennt ist oder die Aufzeichnung wegen vollem Speicher pausiert.
+- **Reparaturhinweise**, wenn der Bus länger als 10 Minuten getrennt ist, die Aufzeichnung wegen vollem Speicher pausiert oder eine Gruppenadresse, die sonst regelmäßig sendet, verstummt ist („1/2/3 Temperatur Bad sendet nicht mehr“, ab 5 Adressen ein Sammelhinweis). „Ignorieren“ sagt dem Add-on, sie nicht mehr zu melden; sendet die Adresse wieder, verschwindet der Hinweis und sie wird wieder beobachtet. Solange die Aufzeichnung aus oder der Bus getrennt ist, kommt kein solcher Hinweis.
 
 Solange die Integration eingerichtet ist, kündigt das Add-on dieselben Entitäten nicht mehr über MQTT an. Entfernst du die Integration, kommt das MQTT-Gerät zurück.
 

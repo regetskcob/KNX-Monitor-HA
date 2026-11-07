@@ -3,11 +3,27 @@
     "step": {
       "hassio_confirm": {
         "title": "KNX Monitor add-on found",
-        "description": "Set up the KNX Monitor add-on as a device? It then provides sensors, the recording switch, device triggers, services, diagnostics and repairs. The add-on stops announcing the same entities over MQTT while the integration is set up."
+        "description": "Set up the KNX Monitor add-on as a device? It then provides sensors, the recording switch, event entities, device triggers and conditions, services, diagnostics and repairs. The add-on stops announcing the same entities over MQTT while the integration is set up."
+      },
+      "manual": {
+        "title": "KNX box or container",
+        "description": "KNX Monitor on a KNX box or in a Docker container. The box shows the pairing link under /pair as QR code and text: tick \"Manage\" there, Home Assistant needs a device with admin rights. Without the box's own certificate the connection is not encrypted.",
+        "data": {
+          "address": "Address of the KNX box or container",
+          "link": "Pairing link"
+        },
+        "data_description": {
+          "address": "For example knx-box.local or 192.168.1.20:8765. Leave empty to use the address from the link.",
+          "link": "knxmonitor://box?url=…&key=…, from /pair on the box."
+        }
       }
     },
     "error": {
-      "cannot_connect": "The KNX Monitor add-on does not answer. Is it running?"
+      "cannot_connect": "The KNX Monitor add-on does not answer. Is it running?",
+      "invalid_link": "That is not a pairing link of the box (knxmonitor://box?…&key=…), or the address is not valid.",
+      "box_unreachable": "Box not reachable. Check the address and whether the box allows access from the network.",
+      "invalid_auth": "Link invalid or device revoked. The device needs admin rights (\"Manage\" on /pair), and the box must allow access from the network.",
+      "tls_mismatch": "Certificate does not match the link. Pair again on /pair and use the new link."
     },
     "abort": {
       "already_configured": "KNX Monitor is already set up.",
@@ -24,7 +40,15 @@
       "fault_on": "Fault on",
       "fault_off": "Fault off",
       "bus_connected": "Bus connected",
-      "bus_disconnected": "Bus connection lost"
+      "bus_disconnected": "Bus connection lost",
+      "specific_watcher_fired": "Watcher \"{subtype}\" fired"
+    },
+    "condition_type": {
+      "bus_connected": "Bus is connected",
+      "bus_disconnected": "Bus is disconnected",
+      "recording_on": "Recording is on",
+      "alarm_open": "Alarm open",
+      "low_space": "Low space"
     }
   },
   "entity": {
@@ -34,6 +58,31 @@
       },
       "low_space": {
         "name": "Low space"
+      }
+    },
+    "event": {
+      "watcher_event": {
+        "name": "Watcher",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "fired": "Fired"
+            }
+          }
+        }
+      },
+      "alarm_event": {
+        "name": "Alarm",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "alarm_on": "Alarm on",
+              "alarm_off": "Alarm off",
+              "fault_on": "Fault on",
+              "fault_off": "Fault off"
+            }
+          }
+        }
       }
     },
     "sensor": {
@@ -111,6 +160,40 @@
     "low_space": {
       "title": "KNX Monitor: recording paused, disk full",
       "description": "The disk is almost full. The add-on already removed the oldest days and has paused the recording. Free up space or shorten the retention in KNX Monitor; the recording continues by itself."
+    },
+    "silent": {
+      "title": "KNX Monitor: {label} stopped sending",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "{label} stopped sending",
+            "description": "Usually sends about every {interval}, last at {last}. Check the device and bus voltage, or ignore the address. Once it sends again, this repair goes away by itself."
+          }
+        },
+        "error": {
+          "cannot_connect": "KNX Monitor does not answer. Try again later."
+        },
+        "abort": {
+          "not_loaded": "KNX Monitor is not set up or not running."
+        }
+      }
+    },
+    "silent_many": {
+      "title": "KNX Monitor: {count} addresses stopped sending",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "{count} addresses stopped sending",
+            "description": "These usually send regularly (interval, last telegram):\n\n{list}\n\nCheck the devices and bus voltage, or ignore the listed ones (if there are more, the next ones appear afterwards). An address that sends again disappears from the list by itself."
+          }
+        },
+        "error": {
+          "cannot_connect": "KNX Monitor does not answer. Try again later."
+        },
+        "abort": {
+          "not_loaded": "KNX Monitor is not set up or not running."
+        }
+      }
     }
   },
   "services": {

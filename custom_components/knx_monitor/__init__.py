@@ -1,8 +1,10 @@
 """KNX Monitor: the add-on as a device in Home Assistant.
 
-Sensors, recording switch, device triggers, services, diagnostics and repairs
-for the KNX Monitor add-on. Set up through the add-on's discovery; while set
-up, the add-on stops announcing the same entities over MQTT.
+Sensors, recording switch, event entities, device triggers and conditions,
+services, diagnostics and repairs for the KNX Monitor add-on. Set up through
+the add-on's discovery, or by hand for a KNX box or a Docker container with a
+pairing link; while set up, the server stops announcing the same entities over
+MQTT.
 """
 
 from __future__ import annotations
@@ -17,13 +19,15 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 
 from .api import KnxMonitorApi, KnxMonitorError
-from .const import CONF_TOKEN, DOMAIN
-from .coordinator import KnxMonitorConfigEntry, KnxMonitorCoordinator
+from .const import CONF_FINGERPRINT, CONF_SSL, CONF_TOKEN, DOMAIN
+from .coordinator import KnxMonitorConfigEntry, KnxMonitorCoordinator, has_events
 from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.SWITCH]
+# Event entities only where the add-on's events arrive (through the Supervisor).
+EVENT_PLATFORMS = [*PLATFORMS, Platform.EVENT]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -36,8 +40,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 def _api(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -> KnxMonitorApi:
     return KnxMonitorApi(
-        async_get_clientsession(hass), entry.data[CONF_HOST], entry.data[CONF_PORT], entry.data[CONF_TOKEN]
+        async_get_clientsession(hass),
+        entry.data[CONF_HOST],
+        entry.data[CONF_PORT],
+        entry.data[CONF_TOKEN],
+        ssl=entry.data.get(CONF_SSL, False),
+        fingerprint=entry.data.get(CONF_FINGERPRINT),
     )
+
+
+def _platforms(entry: KnxMonitorConfigEntry) -> list[Platform]:
+    return EVENT_PLATFORMS if has_events(entry) else PLATFORMS
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -> bool:
@@ -51,13 +64,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -
             # Not alongside the MQTT entities: Home Assistant tries again later.
             raise ConfigEntryNotReady(f"KNX Monitor: could not take over the MQTT entities: {err}") from err
     entry.runtime_data = coordinator
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    coordinator.listen_for_watchers()
+    await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -> bool:
     """Unload the platforms."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    return await hass.config_entries.async_unload_platforms(entry, _platforms(entry))
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -> None:

@@ -67,6 +67,7 @@ async def test_repairs_for_lost_bus_and_full_disk(hass: HomeAssistant, entry, ai
         f"{BASE}/api/ha/state",
         json=addon_state(connected=False, state="disconnected", last_lost=lost, low_space=True, claimed=True),
     )
+    aioclient_mock.get(f"{BASE}/api/ha/watchers", json=[])
     await _setup(hass, entry)
     issues = ir.async_get(hass)
     assert issues.async_get_issue(DOMAIN, "bus_disconnected") is not None
@@ -76,6 +77,7 @@ async def test_repairs_for_lost_bus_and_full_disk(hass: HomeAssistant, entry, ai
 async def test_no_repair_for_a_short_dropout(hass: HomeAssistant, entry, aioclient_mock) -> None:
     lost = (dt_util.utcnow() - timedelta(minutes=2)).isoformat()
     aioclient_mock.get(f"{BASE}/api/ha/state", json=addon_state(connected=False, last_lost=lost, claimed=True))
+    aioclient_mock.get(f"{BASE}/api/ha/watchers", json=[])
     await _setup(hass, entry)
     assert ir.async_get(hass).async_get_issue(DOMAIN, "bus_disconnected") is None
 
