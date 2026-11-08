@@ -1,4 +1,4 @@
-"""Common base of the KNX Monitor entities: one device for the add-on."""
+"""Common base of the Busclear entities: one device for the add-on."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from .coordinator import KnxMonitorCoordinator
 
 
 class KnxMonitorEntity(CoordinatorEntity[KnxMonitorCoordinator]):
-    """Entity of the device "KNX Monitor"."""
+    """Entity of the device "Busclear"."""
 
     _attr_has_entity_name = True
 
@@ -23,7 +23,7 @@ class KnxMonitorEntity(CoordinatorEntity[KnxMonitorCoordinator]):
         slug = coordinator.config_entry.data.get(CONF_SLUG)
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, DOMAIN)},
-            name="KNX Monitor",
+            name="Busclear",
             manufacturer=MANUFACTURER,
             # Set up by hand: a KNX box or a Docker container, opened in the browser.
             model="Home Assistant add-on" if slug else "KNX box or container",

@@ -57,7 +57,7 @@ CONDITION_SCHEMA = DEVICE_CONDITION_BASE_SCHEMA.extend({vol.Required(CONF_TYPE):
 
 
 async def async_get_conditions(hass: HomeAssistant, device_id: str) -> list[dict[str, Any]]:
-    """All conditions of the device "KNX Monitor"."""
+    """All conditions of the device "Busclear"."""
     return [
         {CONF_CONDITION: "device", CONF_DOMAIN: DOMAIN, CONF_DEVICE_ID: device_id, CONF_TYPE: condition}
         for condition in CONDITIONS

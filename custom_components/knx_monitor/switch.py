@@ -40,5 +40,5 @@ class Recording(KnxMonitorEntity, SwitchEntity):
         try:
             state = await self.coordinator.api.set_recording(on)
         except KnxMonitorError as err:
-            raise HomeAssistantError(f"KNX Monitor: {err}") from err
+            raise HomeAssistantError(f"Busclear: {err}") from err
         self.coordinator.async_set_updated_data(state)

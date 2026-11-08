@@ -1,4 +1,4 @@
-"""Setup of KNX Monitor: through the add-on's discovery, or by hand for a KNX box or container."""
+"""Setup of Busclear: through the add-on's discovery, or by hand for a KNX box or container."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from .const import CONF_FINGERPRINT, CONF_SLUG, CONF_SSL, CONF_TOKEN, DOMAIN
 CONF_ADDRESS = "address"
 CONF_LINK = "link"
 
-# Slug of the KNX Monitor add-on: from the official repository (the
+# Slug of the Busclear add-on: from the official repository (the
 # Supervisor's prefix is the first 8 hex digits of the SHA-1 of the lower-case
 # repository URL, https://github.com/regetskcob/knx-monitor) or from the local
 # add-on folder. Any other repository could pick a slug like
@@ -29,10 +29,10 @@ ADDON_SLUG = re.compile(r"(?:2541da37|local)_knx_monitor")
 
 
 def is_knx_monitor_addon(slug: str | None) -> bool:
-    """Whether the announcing add-on is KNX Monitor.
+    """Whether the announcing add-on is Busclear.
 
     The Supervisor puts the slug of the add-on that posted a discovery message
-    into it, so another add-on cannot pretend to be KNX Monitor. Accepted are
+    into it, so another add-on cannot pretend to be Busclear. Accepted are
     the add-on from the official repository (`2541da37_knx_monitor`) and the
     local build (`local_knx_monitor`), not the same name from another
     repository nor an add-on whose own slug merely ends in `_knx_monitor`. Every other add-on announcing the
@@ -122,7 +122,7 @@ def parse_pairing(link: str, address: str = "") -> tuple[Target, str] | None:
 class KnxMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
     """The add-on announces host, port and token; the user only confirms.
 
-    Without the add-on (Home Assistant Container, or KNX Monitor on a KNX box
+    Without the add-on (Home Assistant Container, or Busclear on a KNX box
     or in Docker), the user enters the box's address and pairing link.
     """
 
@@ -182,7 +182,7 @@ class KnxMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
                     }
                     if target.fingerprint:
                         data[CONF_FINGERPRINT] = target.fingerprint
-                    return self.async_create_entry(title="KNX Monitor", data=data)
+                    return self.async_create_entry(title="Busclear", data=data)
         schema = vol.Schema(
             {
                 vol.Optional(CONF_ADDRESS, default=(user_input or {}).get(CONF_ADDRESS, "")): str,
@@ -193,7 +193,7 @@ class KnxMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="manual", data_schema=schema, errors=errors)
 
     async def async_step_hassio(self, discovery_info: HassioServiceInfo) -> ConfigFlowResult:
-        """The KNX Monitor add-on announced itself."""
+        """The Busclear add-on announced itself."""
         if not is_knx_monitor_addon(discovery_info.slug):
             return self.async_abort(reason="not_knx_monitor_addon")
         return await self._discovered(discovery_info.config, discovery_info.slug)
@@ -230,5 +230,5 @@ class KnxMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
             except KnxMonitorError:
                 errors["base"] = "cannot_connect"
             else:
-                return self.async_create_entry(title="KNX Monitor", data=self._discovery)
+                return self.async_create_entry(title="Busclear", data=self._discovery)
         return self.async_show_form(step_id="hassio_confirm", errors=errors)

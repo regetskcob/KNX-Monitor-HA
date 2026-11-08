@@ -2,12 +2,12 @@
   "config": {
     "step": {
       "hassio_confirm": {
-        "title": "KNX Monitor add-on found",
-        "description": "Set up the KNX Monitor add-on as a device? It then provides sensors, the recording switch, event entities, device triggers and conditions, services, diagnostics and repairs. The add-on stops announcing the same entities over MQTT while the integration is set up."
+        "title": "Busclear add-on found",
+        "description": "Set up the Busclear add-on as a device? It then provides sensors, the recording switch, event entities, device triggers and conditions, services, diagnostics and repairs. The add-on stops announcing the same entities over MQTT while the integration is set up."
       },
       "manual": {
         "title": "KNX box or container",
-        "description": "KNX Monitor on a KNX box or in a Docker container. The box shows the pairing link under /pair as QR code and text: tick \"Manage\" there, Home Assistant needs a device with admin rights. Without the box's own certificate the connection is not encrypted.",
+        "description": "Busclear on a KNX box or in a Docker container. The box shows the pairing link under /pair as QR code and text: tick \"Manage\" there, Home Assistant needs a device with admin rights. Without the box's own certificate the connection is not encrypted.",
         "data": {
           "address": "Address of the KNX box or container",
           "link": "Pairing link"
@@ -19,17 +19,17 @@
       }
     },
     "error": {
-      "cannot_connect": "The KNX Monitor add-on does not answer. Is it running?",
+      "cannot_connect": "The Busclear add-on does not answer. Is it running?",
       "invalid_link": "That is not a pairing link of the box (knxmonitor://box?…&key=…), or the address is not valid.",
       "box_unreachable": "Box not reachable. Check the address and whether the box allows access from the network.",
       "invalid_auth": "Link invalid or device revoked. The device needs admin rights (\"Manage\" on /pair), and the box must allow access from the network.",
       "tls_mismatch": "Certificate does not match the link. Pair again on /pair and use the new link."
     },
     "abort": {
-      "already_configured": "KNX Monitor is already set up.",
-      "addon_required": "KNX Monitor is set up through its add-on: install and start the KNX Monitor add-on, then Home Assistant offers the integration by itself.",
-      "single_instance_allowed": "KNX Monitor is already set up.",
-      "not_knx_monitor_addon": "Another add-on announced itself as KNX Monitor and was ignored. Only the KNX Monitor add-on can set up this integration."
+      "already_configured": "Busclear is already set up.",
+      "addon_required": "Busclear is set up through its add-on: install and start the Busclear add-on, then Home Assistant offers the integration by itself.",
+      "single_instance_allowed": "Busclear is already set up.",
+      "not_knx_monitor_addon": "Another add-on announced itself as Busclear and was ignored. Only the Busclear add-on can set up this integration."
     }
   },
   "device_automation": {
@@ -143,26 +143,26 @@
   },
   "exceptions": {
     "not_loaded": {
-      "message": "KNX Monitor is not set up or the add-on is not running."
+      "message": "Busclear is not set up or the add-on is not running."
     },
     "export_too_large": {
       "message": "The export was aborted because it is larger than {limit} MB. Export fewer days instead of everything."
     },
     "export_running": {
-      "message": "An export of the KNX Monitor history is already running. Wait until it has finished."
+      "message": "An export of the Busclear history is already running. Wait until it has finished."
     }
   },
   "issues": {
     "bus_disconnected": {
       "title": "KNX bus not connected",
-      "description": "The KNX Monitor add-on has had no bus connection since {since}, so nothing is being recorded. Check the gateway or the connection in the add-on (KNX Monitor in the sidebar)."
+      "description": "The Busclear add-on has had no bus connection since {since}, so nothing is being recorded. Check the gateway or the connection in the add-on (Busclear in the sidebar)."
     },
     "low_space": {
-      "title": "KNX Monitor: recording paused, disk full",
-      "description": "The disk is almost full. The add-on already removed the oldest days and has paused the recording. Free up space or shorten the retention in KNX Monitor; the recording continues by itself."
+      "title": "Busclear: recording paused, disk full",
+      "description": "The disk is almost full. The add-on already removed the oldest days and has paused the recording. Free up space or shorten the retention in Busclear; the recording continues by itself."
     },
     "silent": {
-      "title": "KNX Monitor: {label} stopped sending",
+      "title": "Busclear: {label} stopped sending",
       "fix_flow": {
         "step": {
           "confirm": {
@@ -171,15 +171,15 @@
           }
         },
         "error": {
-          "cannot_connect": "KNX Monitor does not answer. Try again later."
+          "cannot_connect": "Busclear does not answer. Try again later."
         },
         "abort": {
-          "not_loaded": "KNX Monitor is not set up or not running."
+          "not_loaded": "Busclear is not set up or not running."
         }
       }
     },
     "silent_many": {
-      "title": "KNX Monitor: {count} addresses stopped sending",
+      "title": "Busclear: {count} addresses stopped sending",
       "fix_flow": {
         "step": {
           "confirm": {
@@ -188,10 +188,10 @@
           }
         },
         "error": {
-          "cannot_connect": "KNX Monitor does not answer. Try again later."
+          "cannot_connect": "Busclear does not answer. Try again later."
         },
         "abort": {
-          "not_loaded": "KNX Monitor is not set up or not running."
+          "not_loaded": "Busclear is not set up or not running."
         }
       }
     }
@@ -199,11 +199,11 @@
   "services": {
     "create_report": {
       "name": "Create report",
-      "description": "Creates the installation report of the KNX Monitor add-on now and returns it."
+      "description": "Creates the installation report of the Busclear add-on now and returns it."
     },
     "export_history": {
       "name": "Export history",
-      "description": "Saves the history of the KNX Monitor add-on as ETS group monitor file in the folder knx_monitor of the configuration. SpectrumKNX and the ETS read it.",
+      "description": "Saves the history of the Busclear add-on as ETS group monitor file in the folder knx_monitor of the configuration. SpectrumKNX and the ETS read it.",
       "fields": {
         "days": {
           "name": "Days",

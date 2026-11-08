@@ -1,7 +1,7 @@
-"""KNX Monitor: the add-on as a device in Home Assistant.
+"""Busclear: the add-on as a device in Home Assistant.
 
 Sensors, recording switch, event entities, device triggers and conditions,
-services, diagnostics and repairs for the KNX Monitor add-on. Set up through
+services, diagnostics and repairs for the Busclear add-on. Set up through
 the add-on's discovery, or by hand for a KNX box or a Docker container with a
 pairing link; while set up, the server stops announcing the same entities over
 MQTT.
@@ -62,7 +62,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -
             await coordinator.api.claim(True)
         except KnxMonitorError as err:
             # Not alongside the MQTT entities: Home Assistant tries again later.
-            raise ConfigEntryNotReady(f"KNX Monitor: could not take over the MQTT entities: {err}") from err
+            raise ConfigEntryNotReady(f"Busclear: could not take over the MQTT entities: {err}") from err
     entry.runtime_data = coordinator
     coordinator.listen_for_watchers()
     await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
@@ -83,4 +83,4 @@ async def async_remove_entry(hass: HomeAssistant, entry: KnxMonitorConfigEntry) 
     try:
         await _api(hass, entry).claim(False)
     except KnxMonitorError as err:
-        _LOGGER.warning("KNX Monitor: could not give the entities back to MQTT: %s", err)
+        _LOGGER.warning("Busclear: could not give the entities back to MQTT: %s", err)

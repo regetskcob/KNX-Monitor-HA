@@ -1,4 +1,4 @@
-"""Client for the KNX Monitor server (endpoints below /api/ha/)."""
+"""Client for the Busclear server (endpoints below /api/ha/)."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ def fingerprint_bytes(fingerprint: str) -> bytes:
 
 
 class KnxMonitorApi:
-    """Talks to the KNX Monitor server with its token.
+    """Talks to the Busclear server with its token.
 
     Only the configured address gets the token: the one the add-on announced,
     or the one entered for a KNX box. There is no fallback to 127.0.0.1: if

@@ -2,14 +2,14 @@
   "config": {
     "step": {
       "hassio_confirm": {
-        "title": "KNX-Monitor-Add-on gefunden",
-        "description": "Das KNX-Monitor-Add-on als Gerät einrichten? Es bringt dann Sensoren, den Schalter für die Aufzeichnung, Ereignis-Entitäten, Geräte-Auslöser und -Bedingungen, Dienste, Diagnose und Reparaturhinweise. Solange die Integration eingerichtet ist, kündigt das Add-on dieselben Entitäten nicht mehr über MQTT an."
+        "title": "Busclear-Add-on gefunden",
+        "description": "Das Busclear-Add-on als Gerät einrichten? Es bringt dann Sensoren, den Schalter für die Aufzeichnung, Ereignis-Entitäten, Geräte-Auslöser und -Bedingungen, Dienste, Diagnose und Reparaturhinweise. Solange die Integration eingerichtet ist, kündigt das Add-on dieselben Entitäten nicht mehr über MQTT an."
       },
       "manual": {
-        "title": "KNX-Box oder Container",
-        "description": "KNX Monitor auf einer KNX-Box oder in einem Docker-Container. Den Link zeigt die Box unter /pair als QR-Code und Text: Dort „Verwalten“ ankreuzen, Home Assistant braucht ein Gerät mit Admin-Recht. Ohne eigenes Zertifikat der Box ist die Verbindung unverschlüsselt.",
+        "title": "Busclear Box oder Container",
+        "description": "Busclear auf einer Busclear Box oder in einem Docker-Container. Den Link zeigt die Box unter /pair als QR-Code und Text: Dort „Verwalten“ ankreuzen, Home Assistant braucht ein Gerät mit Admin-Recht. Ohne eigenes Zertifikat der Box ist die Verbindung unverschlüsselt.",
         "data": {
-          "address": "Adresse der KNX-Box oder des Containers",
+          "address": "Adresse der Busclear Box oder des Containers",
           "link": "Kopplungslink"
         },
         "data_description": {
@@ -19,17 +19,17 @@
       }
     },
     "error": {
-      "cannot_connect": "Das KNX-Monitor-Add-on antwortet nicht. Läuft es?",
+      "cannot_connect": "Das Busclear-Add-on antwortet nicht. Läuft es?",
       "invalid_link": "Das ist kein Kopplungslink der Box (knxmonitor://box?…&key=…), oder die Adresse ist ungültig.",
       "box_unreachable": "Box nicht erreichbar. Prüfe die Adresse und ob die Box Zugriff aus dem Netzwerk erlaubt.",
       "invalid_auth": "Link ungültig oder Gerät gesperrt. Das Gerät braucht Admin-Recht („Verwalten“ auf /pair), und die Box muss Zugriff aus dem Netzwerk erlauben.",
       "tls_mismatch": "Zertifikat passt nicht zum Link. Auf /pair neu koppeln und den neuen Link nehmen."
     },
     "abort": {
-      "already_configured": "KNX Monitor ist schon eingerichtet.",
-      "addon_required": "KNX Monitor wird über sein Add-on eingerichtet: Installiere und starte das KNX-Monitor-Add-on, dann bietet Home Assistant die Integration von selbst an.",
-      "single_instance_allowed": "KNX Monitor ist schon eingerichtet.",
-      "not_knx_monitor_addon": "Ein anderes Add-on hat sich als KNX Monitor gemeldet und wurde ignoriert. Nur das KNX-Monitor-Add-on kann diese Integration einrichten."
+      "already_configured": "Busclear ist schon eingerichtet.",
+      "addon_required": "Busclear wird über sein Add-on eingerichtet: Installiere und starte das Busclear-Add-on, dann bietet Home Assistant die Integration von selbst an.",
+      "single_instance_allowed": "Busclear ist schon eingerichtet.",
+      "not_knx_monitor_addon": "Ein anderes Add-on hat sich als Busclear gemeldet und wurde ignoriert. Nur das Busclear-Add-on kann diese Integration einrichten."
     }
   },
   "device_automation": {
@@ -143,26 +143,26 @@
   },
   "exceptions": {
     "not_loaded": {
-      "message": "KNX Monitor ist nicht eingerichtet oder das Add-on läuft nicht."
+      "message": "Busclear ist nicht eingerichtet oder das Add-on läuft nicht."
     },
     "export_too_large": {
       "message": "Der Export wurde abgebrochen, weil er größer als {limit} MB ist. Exportiere weniger Tage statt alles."
     },
     "export_running": {
-      "message": "Ein Export des KNX-Monitor-Verlaufs läuft schon. Warte, bis er fertig ist."
+      "message": "Ein Export des Busclear-Verlaufs läuft schon. Warte, bis er fertig ist."
     }
   },
   "issues": {
     "bus_disconnected": {
       "title": "KNX-Bus nicht verbunden",
-      "description": "Das KNX-Monitor-Add-on hat seit {since} keine Verbindung zum Bus und zeichnet nichts auf. Prüfe das Gateway oder die Verbindung im Add-on (KNX Monitor in der Seitenleiste)."
+      "description": "Das Busclear-Add-on hat seit {since} keine Verbindung zum Bus und zeichnet nichts auf. Prüfe das Gateway oder die Verbindung im Add-on (Busclear in der Seitenleiste)."
     },
     "low_space": {
-      "title": "KNX Monitor: Aufzeichnung pausiert, Speicher voll",
-      "description": "Der Speicher ist fast voll. Das Add-on hat die ältesten Tage schon gelöscht und die Aufzeichnung pausiert. Schaffe Platz oder verkürze die Aufbewahrung in KNX Monitor; die Aufzeichnung läuft dann von selbst weiter."
+      "title": "Busclear: Aufzeichnung pausiert, Speicher voll",
+      "description": "Der Speicher ist fast voll. Das Add-on hat die ältesten Tage schon gelöscht und die Aufzeichnung pausiert. Schaffe Platz oder verkürze die Aufbewahrung in Busclear; die Aufzeichnung läuft dann von selbst weiter."
     },
     "silent": {
-      "title": "KNX Monitor: {label} sendet nicht mehr",
+      "title": "Busclear: {label} sendet nicht mehr",
       "fix_flow": {
         "step": {
           "confirm": {
@@ -171,15 +171,15 @@
           }
         },
         "error": {
-          "cannot_connect": "KNX Monitor antwortet nicht. Versuche es später noch einmal."
+          "cannot_connect": "Busclear antwortet nicht. Versuche es später noch einmal."
         },
         "abort": {
-          "not_loaded": "KNX Monitor ist nicht eingerichtet oder läuft nicht."
+          "not_loaded": "Busclear ist nicht eingerichtet oder läuft nicht."
         }
       }
     },
     "silent_many": {
-      "title": "KNX Monitor: {count} Adressen senden nicht mehr",
+      "title": "Busclear: {count} Adressen senden nicht mehr",
       "fix_flow": {
         "step": {
           "confirm": {
@@ -188,10 +188,10 @@
           }
         },
         "error": {
-          "cannot_connect": "KNX Monitor antwortet nicht. Versuche es später noch einmal."
+          "cannot_connect": "Busclear antwortet nicht. Versuche es später noch einmal."
         },
         "abort": {
-          "not_loaded": "KNX Monitor ist nicht eingerichtet oder läuft nicht."
+          "not_loaded": "Busclear ist nicht eingerichtet oder läuft nicht."
         }
       }
     }
@@ -199,11 +199,11 @@
   "services": {
     "create_report": {
       "name": "Bericht erstellen",
-      "description": "Erstellt jetzt den Anlagenbericht des KNX-Monitor-Add-ons und gibt ihn zurück."
+      "description": "Erstellt jetzt den Anlagenbericht des Busclear-Add-ons und gibt ihn zurück."
     },
     "export_history": {
       "name": "Verlauf exportieren",
-      "description": "Speichert den Verlauf des KNX-Monitor-Add-ons als Gruppenmonitor-Datei der ETS im Ordner knx_monitor der Konfiguration. SpectrumKNX und die ETS lesen sie.",
+      "description": "Speichert den Verlauf des Busclear-Add-ons als Gruppenmonitor-Datei der ETS im Ordner knx_monitor der Konfiguration. SpectrumKNX und die ETS lesen sie.",
       "fields": {
         "days": {
           "name": "Tage",

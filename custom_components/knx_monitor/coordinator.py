@@ -69,9 +69,9 @@ class KnxMonitorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data = await self.api.state()
         except KnxMonitorAuthError as err:
             # Add-on reinstalled: its discovery brings the new token and updates the entry.
-            raise UpdateFailed(f"KNX Monitor add-on refused the token: {err}") from err
+            raise UpdateFailed(f"Busclear add-on refused the token: {err}") from err
         except KnxMonitorError as err:
-            raise UpdateFailed(f"KNX Monitor add-on not reachable: {err}") from err
+            raise UpdateFailed(f"Busclear add-on not reachable: {err}") from err
         self._update_repairs(data)
         await self._update_silent(data)
         if has_events(self.config_entry):
@@ -91,7 +91,7 @@ class KnxMonitorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self.watchers = None
         except KnxMonitorError as err:
             # Keep the list we have; the next poll tries again.
-            _LOGGER.debug("KNX Monitor: watcher list not loaded: %s", err)
+            _LOGGER.debug("Busclear: watcher list not loaded: %s", err)
 
     @callback
     def async_watcher_event(self, event: Event) -> None:
@@ -122,7 +122,7 @@ class KnxMonitorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.silent = await self.api.silent()
             except KnxMonitorError as err:
                 # Leave the repairs as they are until the list can be read.
-                _LOGGER.debug("KNX Monitor: silent addresses not loaded: %s", err)
+                _LOGGER.debug("Busclear: silent addresses not loaded: %s", err)
                 return
         else:
             self.silent = []

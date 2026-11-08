@@ -19,7 +19,7 @@ from .conftest import BASE, TOKEN, addon_state
 
 DISCOVERY = HassioServiceInfo(
     config={"host": "127.0.0.1", "port": 8765, "token": TOKEN},
-    name="KNX Monitor",
+    name="Busclear",
     slug="2541da37_knx_monitor",
     uuid="1234",
 )
@@ -76,7 +76,7 @@ async def test_rediscovery_updates_token(hass: HomeAssistant, entry, addon) -> N
     entry.add_to_hass(hass)
     new = HassioServiceInfo(
         config={"host": "127.0.0.1", "port": 8765, "token": "b" * 64},
-        name="KNX Monitor",
+        name="Busclear",
         slug="2541da37_knx_monitor",
         uuid="1",
     )
@@ -152,7 +152,7 @@ async def test_user_step_only_other_add_ons(hass: HomeAssistant) -> None:
         patch("homeassistant.components.hassio.get_supervisor_client", return_value=client),
     ):
         result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
-    # No KNX Monitor add-on: a KNX box or container can still be set up by hand.
+    # No Busclear add-on: a KNX box or container can still be set up by hand.
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "manual"
 
@@ -165,7 +165,7 @@ BOX = "http://192.168.1.20:8765"
 
 
 def _link(url: str = "http://10.42.0.1/", key: str = KEY, fp: str | None = None) -> str:
-    return f"knxmonitor://box?url={url}&key={key}&name=KNX-Box" + (f"&fp={fp}" if fp else "")
+    return f"knxmonitor://box?url={url}&key={key}&name=Busclear Box" + (f"&fp={fp}" if fp else "")
 
 
 @pytest.mark.parametrize(

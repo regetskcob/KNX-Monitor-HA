@@ -1,1 +1,1 @@
-"""Tests of the KNX Monitor integration."""
+"""Tests of the Busclear integration."""

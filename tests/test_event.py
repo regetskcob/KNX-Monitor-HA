@@ -19,12 +19,12 @@ async def _setup(hass: HomeAssistant, entry) -> None:
 async def test_same_unique_ids_as_the_mqtt_device(hass: HomeAssistant, entry, addon) -> None:
     await _setup(hass, entry)
     registry = er.async_get(hass)
-    assert registry.async_get_entity_id("event", DOMAIN, "knx_monitor_watcher_event") == "event.knx_monitor_watcher"
-    assert registry.async_get_entity_id("event", DOMAIN, "knx_monitor_alarm_event") == "event.knx_monitor_alarm"
-    watcher = hass.states.get("event.knx_monitor_watcher")
+    assert registry.async_get_entity_id("event", DOMAIN, "knx_monitor_watcher_event") == "event.busclear_watcher"
+    assert registry.async_get_entity_id("event", DOMAIN, "knx_monitor_alarm_event") == "event.busclear_alarm"
+    watcher = hass.states.get("event.busclear_watcher")
     assert watcher.state == "unknown"
     assert watcher.attributes["event_types"] == ["fired"]
-    assert hass.states.get("event.knx_monitor_alarm").attributes["event_types"] == [
+    assert hass.states.get("event.busclear_alarm").attributes["event_types"] == [
         "alarm_on",
         "alarm_off",
         "fault_on",
@@ -36,7 +36,7 @@ async def test_watcher_and_alarm_events(hass: HomeAssistant, entry, addon) -> No
     await _setup(hass, entry)
     hass.bus.async_fire("knx_monitor_watcher", {"watcher_id": "w1", "name": "Fenster Bad offen", "address": "1/1/1"})
     await hass.async_block_till_done()
-    watcher = hass.states.get("event.knx_monitor_watcher")
+    watcher = hass.states.get("event.busclear_watcher")
     assert watcher.state != "unknown"
     assert watcher.attributes["event_type"] == "fired"
     assert watcher.attributes["watcher_id"] == "w1"
@@ -48,7 +48,7 @@ async def test_watcher_and_alarm_events(hass: HomeAssistant, entry, addon) -> No
     ]:
         hass.bus.async_fire("knx_monitor_alarm", data)
         await hass.async_block_till_done()
-        alarm = hass.states.get("event.knx_monitor_alarm")
+        alarm = hass.states.get("event.busclear_alarm")
         assert alarm.attributes["event_type"] == expected
         assert alarm.attributes["address"] == "8/1/1"
 
@@ -57,7 +57,7 @@ async def test_no_event_entities_for_a_box(hass: HomeAssistant, box_entry, aiocl
     """Set up by hand: the box's events do not reach Home Assistant, so no entities that never change."""
     aioclient_mock.get(f"{BASE}/api/ha/state", json=addon_state(claimed=True))
     await _setup(hass, box_entry)
-    assert hass.states.get("event.knx_monitor_watcher") is None
-    assert hass.states.get("binary_sensor.knx_monitor_bus_connected").state == "on"
+    assert hass.states.get("event.busclear_watcher") is None
+    assert hass.states.get("binary_sensor.busclear_bus_connected").state == "on"
     # No watcher list either: there are no triggers to fill.
     assert not any(str(url).endswith("/api/ha/watchers") for _, url, *_ in aioclient_mock.mock_calls)

@@ -56,7 +56,7 @@ def entry() -> MockConfigEntry:
     return MockConfigEntry(
         domain=DOMAIN,
         unique_id=DOMAIN,
-        title="KNX Monitor",
+        title="Busclear",
         data={"host": "127.0.0.1", "port": 8765, "token": TOKEN, "slug": "2541da37_knx_monitor"},
     )
 
@@ -67,7 +67,7 @@ def box_entry() -> MockConfigEntry:
     return MockConfigEntry(
         domain=DOMAIN,
         unique_id=DOMAIN,
-        title="KNX Monitor",
+        title="Busclear",
         data={"host": "127.0.0.1", "port": 8765, "token": TOKEN, "ssl": False},
     )
 

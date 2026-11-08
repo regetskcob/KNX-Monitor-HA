@@ -1,23 +1,23 @@
-# KNX Monitor for Home Assistant
+# Busclear for Home Assistant
 
-Integration for the [KNX Monitor add-on](https://github.com/regetskcob/KNX-Monitor): the add-on becomes the device "KNX Monitor" with sensors, a switch, event entities, device triggers and conditions, services, diagnostics and repairs, no MQTT broker needed. It also works with a KNX box or the Docker container, without Supervisor.
+Integration for the [Busclear add-on](https://github.com/regetskcob/KNX-Monitor): the add-on becomes the device "Busclear" with sensors, a switch, event entities, device triggers and conditions, services, diagnostics and repairs, no MQTT broker needed. It also works with a KNX box or the Docker container, without Supervisor.
 
 ## Requirements
 
 - Home Assistant 2025.1 or newer
-- With Supervisor (Home Assistant OS or Supervised): KNX Monitor add-on 1.9.7 or newer; per-watcher triggers and the "stopped sending" repair need 1.9.10 or newer
-- Without Supervisor (Home Assistant Container): a KNX box or the Docker container with KNX Monitor 1.9.10 or newer
+- With Supervisor (Home Assistant OS or Supervised): Busclear add-on 1.9.7 or newer; per-watcher triggers and the "stopped sending" repair need 1.9.10 or newer
+- Without Supervisor (Home Assistant Container): a KNX box or the Docker container with Busclear 1.9.10 or newer
 
 ## Installation
 
-1. In HACS, add `https://github.com/regetskcob/KNX-Monitor-HA` as a *custom repository* of type *Integration* and install **KNX Monitor**.
+1. In HACS, add `https://github.com/regetskcob/KNX-Monitor-HA` as a *custom repository* of type *Integration* and install **Busclear**.
 2. Restart Home Assistant.
-3. With the add-on running, Home Assistant shows "New device found: KNX Monitor". Confirm, done.
+3. With the add-on running, Home Assistant shows "New device found: Busclear". Confirm, done.
 
 ### KNX box or Docker container
 
 1. On the box (or container) open `/pair` in the browser, log in with the box password, tick **Verwalten** (the integration needs a device with admin rights) and create the link. Docker: set `LAN_ACCESS=yes` unless Home Assistant runs on the same host.
-2. *Settings → Devices & services → Add integration → KNX Monitor*. Without the add-on, Home Assistant asks for the address of the box or container (e.g. `knx-box.local` or `192.168.1.20:8765`; empty takes the one from the link) and the pairing link (`knxmonitor://box?url=…&key=…`).
+2. *Settings → Devices & services → Add integration → Busclear*. Without the add-on, Home Assistant asks for the address of the box or container (e.g. `knx-box.local` or `192.168.1.20:8765`; empty takes the one from the link) and the pairing link (`knxmonitor://box?url=…&key=…`).
 
 The access key goes only to that address, redirects are not followed. If the box has its own certificate, the link carries its fingerprint: the integration then speaks HTTPS and accepts only that certificate ("Certificate does not match the link" otherwise). Without one the connection is not encrypted. Revoke the device on `/pair` to take the access away.
 
@@ -42,33 +42,33 @@ Bugs and wishes at [regetskcob/KNX-Monitor/issues](https://github.com/regetskcob
 
 This repository is generated from the development repository; please open an issue instead of a pull request.
 
-License: GPLv3, like KNX Monitor.
+License: GPLv3, like Busclear.
 
 ---
 
 <details>
 <summary>🇩🇪 Deutsch</summary>
 
-# KNX Monitor für Home Assistant
+# Busclear für Home Assistant
 
-Integration für das [KNX-Monitor-Add-on](https://github.com/regetskcob/KNX-Monitor): Das Add-on wird zum Gerät „KNX Monitor“ mit Sensoren, Schalter, Ereignis-Entitäten, Geräte-Auslösern und -Bedingungen, Diensten, Diagnose und Reparaturhinweisen, ganz ohne MQTT-Broker. Sie geht auch mit einer KNX-Box oder dem Docker-Container, ohne Supervisor.
+Integration für das [Busclear-Add-on](https://github.com/regetskcob/KNX-Monitor): Das Add-on wird zum Gerät „Busclear“ mit Sensoren, Schalter, Ereignis-Entitäten, Geräte-Auslösern und -Bedingungen, Diensten, Diagnose und Reparaturhinweisen, ganz ohne MQTT-Broker. Sie geht auch mit einer Busclear Box oder dem Docker-Container, ohne Supervisor.
 
 ## Voraussetzungen
 
 - Home Assistant ab 2025.1
-- Mit Supervisor (Home Assistant OS oder Supervised): KNX-Monitor-Add-on ab 1.9.7; Auslöser je Wächter und der Hinweis „sendet nicht mehr“ ab 1.9.10
-- Ohne Supervisor (Home Assistant Container): KNX-Box oder Docker-Container mit KNX Monitor ab 1.9.10
+- Mit Supervisor (Home Assistant OS oder Supervised): Busclear-Add-on ab 1.9.7; Auslöser je Wächter und der Hinweis „sendet nicht mehr“ ab 1.9.10
+- Ohne Supervisor (Home Assistant Container): Busclear Box oder Docker-Container mit Busclear ab 1.9.10
 
 ## Installation
 
-1. In HACS unter *Benutzerdefinierte Repositories* `https://github.com/regetskcob/KNX-Monitor-HA` als *Integration* hinzufügen und **KNX Monitor** installieren.
+1. In HACS unter *Benutzerdefinierte Repositories* `https://github.com/regetskcob/KNX-Monitor-HA` als *Integration* hinzufügen und **Busclear** installieren.
 2. Home Assistant neu starten.
-3. Läuft das Add-on, meldet Home Assistant „Neues Gerät gefunden: KNX Monitor“. Bestätigen, fertig.
+3. Läuft das Add-on, meldet Home Assistant „Neues Gerät gefunden: Busclear“. Bestätigen, fertig.
 
-### KNX-Box oder Docker-Container
+### Busclear Box oder Docker-Container
 
 1. Auf der Box (oder im Container) `/pair` im Browser öffnen, mit dem Box-Passwort anmelden, **Verwalten** ankreuzen (die Integration braucht ein Gerät mit Admin-Recht) und den Link erzeugen. Docker: `LAN_ACCESS=yes` setzen, außer Home Assistant läuft auf demselben Rechner.
-2. *Einstellungen → Geräte & Dienste → Integration hinzufügen → KNX Monitor*. Ohne Add-on fragt Home Assistant nach der Adresse der Box oder des Containers (z. B. `knx-box.local` oder `192.168.1.20:8765`; leer nimmt die aus dem Link) und nach dem Kopplungslink (`knxmonitor://box?url=…&key=…`).
+2. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Busclear*. Ohne Add-on fragt Home Assistant nach der Adresse der Box oder des Containers (z. B. `knx-box.local` oder `192.168.1.20:8765`; leer nimmt die aus dem Link) und nach dem Kopplungslink (`knxmonitor://box?url=…&key=…`).
 
 Der Zugangsschlüssel geht nur an diese Adresse, Weiterleitungen werden nicht befolgt. Hat die Box ein eigenes Zertifikat, steht sein Fingerabdruck im Link: Die Integration spricht dann HTTPS und nimmt nur dieses Zertifikat an (sonst „Zertifikat passt nicht zum Link“). Ohne Zertifikat ist die Verbindung unverschlüsselt. Wer das Gerät auf `/pair` sperrt, nimmt den Zugang weg.
 
@@ -93,6 +93,6 @@ Fehler und Wünsche bitte unter [regetskcob/KNX-Monitor/issues](https://github.c
 
 Dieses Repository wird aus dem Entwicklungsrepository erzeugt; Änderungen bitte als Issue statt als Pull Request.
 
-Lizenz: GPLv3, wie KNX Monitor.
+Lizenz: GPLv3, wie Busclear.
 
 </details>

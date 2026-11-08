@@ -51,7 +51,7 @@ def _too_large() -> HomeAssistantError:
 
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
-    """Register the services of KNX Monitor.
+    """Register the services of Busclear.
 
     Both only for administrators: the report and the history name the whole
     installation, and the export writes into the configuration directory.
@@ -64,7 +64,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
         try:
             report = await _coordinator(hass).api.create_report()
         except KnxMonitorError as err:
-            raise HomeAssistantError(f"KNX Monitor: {err}") from err
+            raise HomeAssistantError(f"Busclear: {err}") from err
         return report
 
     async def export_history(call: ServiceCall) -> ServiceResponse:
@@ -75,7 +75,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
             try:
                 return await _download(hass, _coordinator(hass), days)
             except KnxMonitorError as err:
-                raise HomeAssistantError(f"KNX Monitor: {err}") from err
+                raise HomeAssistantError(f"Busclear: {err}") from err
 
     async_register_admin_service(
         hass, DOMAIN, SERVICE_CREATE_REPORT, create_report, supports_response=SupportsResponse.OPTIONAL

@@ -1,4 +1,4 @@
-# Checks of the KNX Monitor integration on every push and pull request:
+# Checks of the Busclear integration on every push and pull request:
 # Home Assistant's hassfest, the HACS validation, lint and the tests.
 # Actions are pinned by commit SHA (the tag or branch in the comment), so a
 # moved tag cannot run foreign code with this repository's token; Dependabot

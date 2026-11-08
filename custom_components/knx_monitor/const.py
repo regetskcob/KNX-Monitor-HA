@@ -1,4 +1,4 @@
-"""Constants of the KNX Monitor integration."""
+"""Constants of the Busclear integration."""
 
 from __future__ import annotations
 

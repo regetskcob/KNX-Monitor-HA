@@ -62,7 +62,7 @@ async def test_not_met_while_the_add_on_is_unreachable(hass: HomeAssistant, entr
     coordinator.last_update_success = False
     coordinator.async_update_listeners()
     await hass.async_block_till_done()
-    assert hass.states.get("binary_sensor.knx_monitor_bus_connected").state == "unavailable"
+    assert hass.states.get("binary_sensor.busclear_bus_connected").state == "unavailable"
     for condition in ("bus_connected", "bus_disconnected", "recording_on", "alarm_open", "low_space"):
         assert not _check(hass, device, condition), condition
 

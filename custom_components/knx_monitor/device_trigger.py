@@ -61,7 +61,7 @@ def _coordinator(hass: HomeAssistant, device_id: str) -> KnxMonitorCoordinator |
 
 
 async def async_get_triggers(hass: HomeAssistant, device_id: str) -> list[dict[str, Any]]:
-    """All triggers of the device "KNX Monitor": the general ones and one per watcher.
+    """All triggers of the device "Busclear": the general ones and one per watcher.
 
     None for a KNX box or container set up by hand: their events do not reach
     Home Assistant yet. Add-ons before 1.9.10 have no watcher list; then only the

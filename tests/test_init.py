@@ -33,11 +33,11 @@ async def test_entities_and_takeover(hass: HomeAssistant, entry, addon) -> None:
     assert entry.state is ConfigEntryState.LOADED
     # Took over the entities from the MQTT device.
     assert any(m == "POST" and str(u).endswith("/api/ha/claim") for m, u, *_ in addon.mock_calls)
-    assert hass.states.get("binary_sensor.knx_monitor_bus_connected").state == "on"
-    assert hass.states.get("switch.knx_monitor_recording").state == "on"
-    assert hass.states.get("sensor.knx_monitor_bus_load").state == "1.4"
-    assert hass.states.get("sensor.knx_monitor_telegrams_today").state == "5329"
-    alarm = hass.states.get("sensor.knx_monitor_last_alarm")
+    assert hass.states.get("binary_sensor.busclear_bus_connected").state == "on"
+    assert hass.states.get("switch.busclear_recording").state == "on"
+    assert hass.states.get("sensor.busclear_bus_load").state == "1.4"
+    assert hass.states.get("sensor.busclear_telegrams_today").state == "5329"
+    alarm = hass.states.get("sensor.busclear_last_alarm")
     assert alarm.state == "Wind"
     assert alarm.attributes["address"] == "8/1/1"
     device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
@@ -48,10 +48,10 @@ async def test_entities_and_takeover(hass: HomeAssistant, entry, addon) -> None:
 async def test_switch_turns_recording_off(hass: HomeAssistant, entry, addon) -> None:
     addon.post(f"{BASE}/api/ha/recording", json=addon_state(recording=False))
     await _setup(hass, entry)
-    await hass.services.async_call("switch", "turn_off", {"entity_id": "switch.knx_monitor_recording"}, blocking=True)
+    await hass.services.async_call("switch", "turn_off", {"entity_id": "switch.busclear_recording"}, blocking=True)
     call = next(c for c in addon.mock_calls if str(c[1]).endswith("/api/ha/recording"))
     assert call[2] == {"on": False}
-    assert hass.states.get("switch.knx_monitor_recording").state == "off"
+    assert hass.states.get("switch.busclear_recording").state == "off"
 
 
 async def test_remove_gives_entities_back(hass: HomeAssistant, entry, addon) -> None:
@@ -186,4 +186,4 @@ async def test_failed_takeover_retries_later(hass: HomeAssistant, entry, aioclie
     await hass.async_block_till_done()
     # Not alongside the MQTT entities: no entities, Home Assistant retries.
     assert entry.state is ConfigEntryState.SETUP_RETRY
-    assert hass.states.get("switch.knx_monitor_recording") is None
+    assert hass.states.get("switch.busclear_recording") is None
