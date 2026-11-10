@@ -9,6 +9,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -42,7 +43,7 @@ def silent_issue_id(address: str) -> str:
 def has_events(entry: ConfigEntry) -> bool:
     """Whether the add-on's events reach Home Assistant.
 
-    The add-on fires them through the Supervisor. A KNX box or a container set
+    The add-on fires them through the Supervisor. A Busclear Box or a container set
     up by hand has no way to do that yet, so its entry has no event entities
     and no device triggers.
     """
@@ -68,6 +69,10 @@ class KnxMonitorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             data = await self.api.state()
         except KnxMonitorAuthError as err:
+            if not has_events(self.config_entry):
+                # Busclear Box or container: the device was revoked or lost its admin
+                # rights. Home Assistant asks for a new pairing link (reauth).
+                raise ConfigEntryAuthFailed(f"Busclear refused the pairing key: {err}") from err
             # Add-on reinstalled: its discovery brings the new token and updates the entry.
             raise UpdateFailed(f"Busclear add-on refused the token: {err}") from err
         except KnxMonitorError as err:

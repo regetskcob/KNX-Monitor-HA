@@ -10,7 +10,7 @@ MANUFACTURER: Final = "regetskcob"
 
 CONF_TOKEN: Final = "token"
 CONF_SLUG: Final = "slug"
-# Set up by hand (KNX box or Docker, no Supervisor): HTTPS, and the SHA-256 of
+# Set up by hand (Busclear Box or Docker, no Supervisor): HTTPS, and the SHA-256 of
 # the server's certificate from the pairing link (base64url without padding).
 CONF_SSL: Final = "ssl"
 CONF_FINGERPRINT: Final = "fingerprint"

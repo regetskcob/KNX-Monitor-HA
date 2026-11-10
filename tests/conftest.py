@@ -63,7 +63,7 @@ def entry() -> MockConfigEntry:
 
 @pytest.fixture
 def box_entry() -> MockConfigEntry:
-    """Set up by hand for a KNX box (no add-on slug, no Supervisor events)."""
+    """Set up by hand for a Busclear Box (no add-on slug, no Supervisor events)."""
     return MockConfigEntry(
         domain=DOMAIN,
         unique_id=DOMAIN,

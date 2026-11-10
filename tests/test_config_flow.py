@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers.service_info.hassio import HassioServiceInfo
 
-from custom_components.knx_monitor.config_flow import Target, parse_pairing
+from custom_components.knx_monitor.config_flow import Target, current_address, parse_pairing
 from custom_components.knx_monitor.const import DOMAIN
 
 from .conftest import BASE, TOKEN, addon_state
@@ -152,12 +152,12 @@ async def test_user_step_only_other_add_ons(hass: HomeAssistant) -> None:
         patch("homeassistant.components.hassio.get_supervisor_client", return_value=client),
     ):
         result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
-    # No Busclear add-on: a KNX box or container can still be set up by hand.
+    # No Busclear add-on: a Busclear Box or container can still be set up by hand.
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "manual"
 
 
-# --- Set up by hand: KNX box or Docker container ------------------------------
+# --- Set up by hand: Busclear Box or Docker container ------------------------------
 
 KEY = "k" * 43
 FP = "A" * 43
@@ -284,3 +284,61 @@ async def test_add_on_discovery_does_not_take_over_a_box(hass: HomeAssistant, bo
     assert result["reason"] == "already_configured"
     assert box_entry.data["token"] == TOKEN
     assert "slug" not in box_entry.data
+
+
+async def test_box_refuses_the_key_asks_for_a_new_link(hass: HomeAssistant, aioclient_mock, box_entry) -> None:
+    """Device revoked on the box: Home Assistant starts the reauth flow, the new link fixes the entry."""
+    old = "http://127.0.0.1:8765"
+    aioclient_mock.get(f"{old}/api/ha/state", status=401)
+    box_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(box_entry.entry_id)
+    await hass.async_block_till_done()
+    assert box_entry.state is config_entries.ConfigEntryState.SETUP_ERROR
+    flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+    assert [f["context"]["source"] for f in flows] == [config_entries.SOURCE_REAUTH]
+    flow = flows[0]
+    assert flow["step_id"] == "reauth_confirm"
+
+    # The new key, the address stays.
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(f"{old}/api/ha/state", json=addon_state(claimed=True))
+    result = await hass.config_entries.flow.async_configure(
+        flow["flow_id"], {"address": "127.0.0.1:8765", "link": _link()}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reauth_successful"
+    assert box_entry.data == {"host": "127.0.0.1", "port": 8765, "token": KEY, "ssl": False}
+
+
+async def test_reauth_wrong_link_keeps_asking(hass: HomeAssistant, aioclient_mock, box_entry) -> None:
+    box_entry.add_to_hass(hass)
+    result = await box_entry.start_reauth_flow(hass)
+    assert result["step_id"] == "reauth_confirm"
+    aioclient_mock.get("http://127.0.0.1:8765/api/ha/state", status=403)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"address": "127.0.0.1:8765", "link": _link()}
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "invalid_auth"}
+    assert box_entry.data["token"] == TOKEN
+
+
+async def test_reauth_for_the_add_on_waits_for_its_discovery(hass: HomeAssistant, entry) -> None:
+    entry.add_to_hass(hass)
+    result = await entry.start_reauth_flow(hass)
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "addon_reauth"
+
+
+@pytest.mark.parametrize(
+    ("data", "address"),
+    [
+        ({"host": "192.168.1.20", "port": 8765, "ssl": False}, "192.168.1.20:8765"),
+        ({"host": "192.168.1.20", "port": 8443, "ssl": True, "fingerprint": FP}, "https://192.168.1.20:8443"),
+        ({"host": "fd00::5", "port": 80, "ssl": False}, "[fd00::5]:80"),
+    ],
+)
+def test_current_address_round_trip(data: dict, address: str) -> None:
+    assert current_address(data) == address
+    target, _ = parse_pairing(_link(fp=data.get("fingerprint")), address)
+    assert (target.host, target.port, target.ssl) == (data["host"], data["port"], data["ssl"])

@@ -42,13 +42,13 @@ class KnxMonitorApi:
     """Talks to the Busclear server with its token.
 
     Only the configured address gets the token: the one the add-on announced,
-    or the one entered for a KNX box. There is no fallback to 127.0.0.1: if
+    or the one entered for a Busclear Box. There is no fallback to 127.0.0.1: if
     the add-on's host name does not resolve, whatever else listens on that port
     of the host would receive the bearer token. The add-on announces 127.0.0.1
     itself when it has no host name. Redirects are not followed, so the token
     cannot be passed on to another address either.
 
-    With a [fingerprint] (KNX box with its own certificate) the connection is
+    With a [fingerprint] (Busclear Box with its own certificate) the connection is
     HTTPS and trusts exactly that certificate, nothing else.
     """
 

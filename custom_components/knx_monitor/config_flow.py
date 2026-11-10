@@ -1,8 +1,9 @@
-"""Setup of Busclear: through the add-on's discovery, or by hand for a KNX box or container."""
+"""Setup of Busclear: through the add-on's discovery, or by hand for a Busclear Box or container."""
 
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
@@ -119,10 +120,20 @@ def parse_pairing(link: str, address: str = "") -> tuple[Target, str] | None:
     return Target(host, port or (443 if ssl else 80), ssl, None), key
 
 
+def current_address(data: Mapping[str, Any]) -> str:
+    """Address of an entry as the form takes it again, e.g. `192.168.1.20:8765`."""
+    host = str(data.get(CONF_HOST, ""))
+    if not host:
+        return ""
+    name = f"[{host}]" if ":" in host else host
+    scheme = "https://" if data.get(CONF_SSL) else ""
+    return f"{scheme}{name}:{data.get(CONF_PORT)}"
+
+
 class KnxMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
     """The add-on announces host, port and token; the user only confirms.
 
-    Without the add-on (Home Assistant Container, or Busclear on a KNX box
+    Without the add-on (Home Assistant Container, or Busclear on a Busclear Box
     or in Docker), the user enters the box's address and pairing link.
     """
 
@@ -132,7 +143,7 @@ class KnxMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
         self._discovery: dict[str, Any] = {}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Added by hand: take the running add-on's announcement, otherwise a KNX box or container."""
+        """Added by hand: take the running add-on's announcement, otherwise a Busclear Box or container."""
         if not is_hassio(self.hass):
             return await self.async_step_manual()
         try:
@@ -147,42 +158,14 @@ class KnxMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
         return await self._discovered(message.config, message.addon)
 
     async def async_step_manual(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """KNX box or Docker container: address and pairing link of a device with admin rights."""
+        """Busclear Box or Docker container: address and pairing link of a device with admin rights."""
         await self.async_set_unique_id(DOMAIN)
         self._abort_if_unique_id_configured()
         errors: dict[str, str] = {}
         if user_input is not None:
-            parsed = parse_pairing(user_input.get(CONF_LINK, ""), user_input.get(CONF_ADDRESS, ""))
-            if parsed is None:
-                errors["base"] = "invalid_link"
-            else:
-                target, key = parsed
-                api = KnxMonitorApi(
-                    async_get_clientsession(self.hass),
-                    target.host,
-                    target.port,
-                    key,
-                    ssl=target.ssl,
-                    fingerprint=target.fingerprint,
-                )
-                try:
-                    await api.state()
-                except KnxMonitorTlsError:
-                    errors["base"] = "tls_mismatch"
-                except KnxMonitorAuthError:
-                    errors["base"] = "invalid_auth"
-                except KnxMonitorError:
-                    errors["base"] = "box_unreachable"
-                else:
-                    data: dict[str, Any] = {
-                        CONF_HOST: target.host,
-                        CONF_PORT: target.port,
-                        CONF_TOKEN: key,
-                        CONF_SSL: target.ssl,
-                    }
-                    if target.fingerprint:
-                        data[CONF_FINGERPRINT] = target.fingerprint
-                    return self.async_create_entry(title="Busclear", data=data)
+            data, errors = await self._check_box(user_input)
+            if data is not None:
+                return self.async_create_entry(title="Busclear", data=data)
         schema = vol.Schema(
             {
                 vol.Optional(CONF_ADDRESS, default=(user_input or {}).get(CONF_ADDRESS, "")): str,
@@ -191,6 +174,65 @@ class KnxMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
             }
         )
         return self.async_show_form(step_id="manual", data_schema=schema, errors=errors)
+
+    async def _check_box(self, user_input: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, str]]:
+        """Entry data for the pairing link and address in [user_input] once the box accepts the key."""
+        parsed = parse_pairing(user_input.get(CONF_LINK, ""), user_input.get(CONF_ADDRESS, ""))
+        if parsed is None:
+            return None, {"base": "invalid_link"}
+        target, key = parsed
+        api = KnxMonitorApi(
+            async_get_clientsession(self.hass),
+            target.host,
+            target.port,
+            key,
+            ssl=target.ssl,
+            fingerprint=target.fingerprint,
+        )
+        try:
+            await api.state()
+        except KnxMonitorTlsError:
+            return None, {"base": "tls_mismatch"}
+        except KnxMonitorAuthError:
+            return None, {"base": "invalid_auth"}
+        except KnxMonitorError:
+            return None, {"base": "box_unreachable"}
+        data: dict[str, Any] = {
+            CONF_HOST: target.host,
+            CONF_PORT: target.port,
+            CONF_TOKEN: key,
+            CONF_SSL: target.ssl,
+        }
+        if target.fingerprint:
+            data[CONF_FINGERPRINT] = target.fingerprint
+        return data, {}
+
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
+        """The box refused the key (device revoked or without admin rights)."""
+        if CONF_SLUG in entry_data:
+            # The add-on brings a new token through its discovery by itself.
+            return self.async_abort(reason="addon_reauth")
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """New pairing link of the same box; the address stays unless changed."""
+        entry = self._get_reauth_entry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            data, errors = await self._check_box(user_input)
+            if data is not None:
+                # A fingerprint from an earlier link goes if the new one has none.
+                new = {k: v for k, v in entry.data.items() if k != CONF_FINGERPRINT} | data
+                return self.async_update_reload_and_abort(entry, data=new)
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_ADDRESS, default=(user_input or {}).get(CONF_ADDRESS, current_address(entry.data))
+                ): str,
+                vol.Required(CONF_LINK): str,
+            }
+        )
+        return self.async_show_form(step_id="reauth_confirm", data_schema=schema, errors=errors)
 
     async def async_step_hassio(self, discovery_info: HassioServiceInfo) -> ConfigFlowResult:
         """The Busclear add-on announced itself."""
@@ -207,7 +249,7 @@ class KnxMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
             CONF_SLUG: slug,
         }
         await self.async_set_unique_id(DOMAIN)
-        # Set up by hand for a KNX box: the add-on does not take that entry over.
+        # Set up by hand for a Busclear Box: the add-on does not take that entry over.
         existing = self.hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, DOMAIN)
         if existing is not None and CONF_SLUG not in existing.data:
             return self.async_abort(reason="already_configured")

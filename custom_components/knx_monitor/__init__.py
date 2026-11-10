@@ -2,7 +2,7 @@
 
 Sensors, recording switch, event entities, device triggers and conditions,
 services, diagnostics and repairs for the Busclear add-on. Set up through
-the add-on's discovery, or by hand for a KNX box or a Docker container with a
+the add-on's discovery, or by hand for a Busclear Box or a Docker container with a
 pairing link; while set up, the server stops announcing the same entities over
 MQTT.
 """

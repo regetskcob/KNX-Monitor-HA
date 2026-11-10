@@ -6,14 +6,26 @@
         "description": "Set up the Busclear add-on as a device? It then provides sensors, the recording switch, event entities, device triggers and conditions, services, diagnostics and repairs. The add-on stops announcing the same entities over MQTT while the integration is set up."
       },
       "manual": {
-        "title": "KNX box or container",
-        "description": "Busclear on a KNX box or in a Docker container. The box shows the pairing link under /pair as QR code and text: tick \"Manage\" there, Home Assistant needs a device with admin rights. Without the box's own certificate the connection is not encrypted.",
+        "title": "Busclear Box or container",
+        "description": "Busclear on a Busclear Box or in a Docker container. The box shows the pairing link under /pair as QR code and text: tick \"Manage\" there, Home Assistant needs a device with admin rights. Without the box's own certificate the connection is not encrypted.",
         "data": {
-          "address": "Address of the KNX box or container",
+          "address": "Address of the Busclear Box or container",
           "link": "Pairing link"
         },
         "data_description": {
           "address": "For example knx-box.local or 192.168.1.20:8765. Leave empty to use the address from the link.",
+          "link": "knxmonitor://box?url=…&key=…, from /pair on the box."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Pair Busclear again",
+        "description": "The Busclear Box or container no longer accepts Home Assistant's device, for example because it was revoked or lost its admin rights. Open /pair on the box, tick \"Manage\" and paste the new pairing link.",
+        "data": {
+          "address": "Address of the Busclear Box or container",
+          "link": "New pairing link"
+        },
+        "data_description": {
+          "address": "Leave as it is unless the box moved.",
           "link": "knxmonitor://box?url=…&key=…, from /pair on the box."
         }
       }
@@ -29,7 +41,9 @@
       "already_configured": "Busclear is already set up.",
       "addon_required": "Busclear is set up through its add-on: install and start the Busclear add-on, then Home Assistant offers the integration by itself.",
       "single_instance_allowed": "Busclear is already set up.",
-      "not_knx_monitor_addon": "Another add-on announced itself as Busclear and was ignored. Only the Busclear add-on can set up this integration."
+      "not_knx_monitor_addon": "Another add-on announced itself as Busclear and was ignored. Only the Busclear add-on can set up this integration.",
+      "reauth_successful": "Busclear is paired again.",
+      "addon_reauth": "The Busclear add-on hands over a new token by itself. Restart the add-on if Home Assistant keeps asking."
     }
   },
   "device_automation": {

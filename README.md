@@ -1,12 +1,12 @@
 # Busclear for Home Assistant
 
-Integration for the [Busclear add-on](https://github.com/regetskcob/KNX-Monitor): the add-on becomes the device "Busclear" with sensors, a switch, event entities, device triggers and conditions, services, diagnostics and repairs, no MQTT broker needed. It also works with a KNX box or the Docker container, without Supervisor.
+Integration for the [Busclear add-on](https://github.com/regetskcob/KNX-Monitor): the add-on becomes the device "Busclear" with sensors, a switch, event entities, device triggers and conditions, services, diagnostics and repairs, no MQTT broker needed. It also works with a Busclear Box or the Docker container, without Supervisor.
 
 ## Requirements
 
 - Home Assistant 2025.1 or newer
 - With Supervisor (Home Assistant OS or Supervised): Busclear add-on 1.9.7 or newer; per-watcher triggers and the "stopped sending" repair need 1.9.10 or newer
-- Without Supervisor (Home Assistant Container): a KNX box or the Docker container with Busclear 1.9.10 or newer
+- Without Supervisor (Home Assistant Container): a Busclear Box or the Docker container with Busclear 1.9.10 or newer
 
 ## Installation
 
@@ -14,12 +14,12 @@ Integration for the [Busclear add-on](https://github.com/regetskcob/KNX-Monitor)
 2. Restart Home Assistant.
 3. With the add-on running, Home Assistant shows "New device found: Busclear". Confirm, done.
 
-### KNX box or Docker container
+### Busclear Box or Docker container
 
 1. On the box (or container) open `/pair` in the browser, log in with the box password, tick **Verwalten** (the integration needs a device with admin rights) and create the link. Docker: set `LAN_ACCESS=yes` unless Home Assistant runs on the same host.
 2. *Settings → Devices & services → Add integration → Busclear*. Without the add-on, Home Assistant asks for the address of the box or container (e.g. `knx-box.local` or `192.168.1.20:8765`; empty takes the one from the link) and the pairing link (`knxmonitor://box?url=…&key=…`).
 
-The access key goes only to that address, redirects are not followed. If the box has its own certificate, the link carries its fingerprint: the integration then speaks HTTPS and accepts only that certificate ("Certificate does not match the link" otherwise). Without one the connection is not encrypted. Revoke the device on `/pair` to take the access away.
+The access key goes only to that address, redirects are not followed. If the box has its own certificate, the link carries its fingerprint: the integration then speaks HTTPS and accepts only that certificate ("Certificate does not match the link" otherwise). Without one the connection is not encrypted. Revoke the device on `/pair` to take the access away. If the box no longer accepts the key (device revoked or without admin rights), Home Assistant asks to pair again: create a new link on `/pair` and paste it; the address stays.
 
 Event entities and device triggers need the add-on: the box has no way yet to hand its events to Home Assistant. Sensors, switch, conditions, services, diagnostics and repairs work the same.
 
@@ -70,7 +70,7 @@ Integration für das [Busclear-Add-on](https://github.com/regetskcob/KNX-Monitor
 1. Auf der Box (oder im Container) `/pair` im Browser öffnen, mit dem Box-Passwort anmelden, **Verwalten** ankreuzen (die Integration braucht ein Gerät mit Admin-Recht) und den Link erzeugen. Docker: `LAN_ACCESS=yes` setzen, außer Home Assistant läuft auf demselben Rechner.
 2. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Busclear*. Ohne Add-on fragt Home Assistant nach der Adresse der Box oder des Containers (z. B. `knx-box.local` oder `192.168.1.20:8765`; leer nimmt die aus dem Link) und nach dem Kopplungslink (`knxmonitor://box?url=…&key=…`).
 
-Der Zugangsschlüssel geht nur an diese Adresse, Weiterleitungen werden nicht befolgt. Hat die Box ein eigenes Zertifikat, steht sein Fingerabdruck im Link: Die Integration spricht dann HTTPS und nimmt nur dieses Zertifikat an (sonst „Zertifikat passt nicht zum Link“). Ohne Zertifikat ist die Verbindung unverschlüsselt. Wer das Gerät auf `/pair` sperrt, nimmt den Zugang weg.
+Der Zugangsschlüssel geht nur an diese Adresse, Weiterleitungen werden nicht befolgt. Hat die Box ein eigenes Zertifikat, steht sein Fingerabdruck im Link: Die Integration spricht dann HTTPS und nimmt nur dieses Zertifikat an (sonst „Zertifikat passt nicht zum Link“). Ohne Zertifikat ist die Verbindung unverschlüsselt. Wer das Gerät auf `/pair` sperrt, nimmt den Zugang weg. Nimmt die Box den Schlüssel nicht mehr an (Gerät gesperrt oder ohne Admin-Recht), fragt Home Assistant nach einer neuen Kopplung: auf `/pair` einen neuen Link erzeugen und einfügen, die Adresse bleibt.
 
 Ereignis-Entitäten und Geräte-Auslöser brauchen das Add-on: Die Box kann ihre Ereignisse noch nicht an Home Assistant übergeben. Sensoren, Schalter, Bedingungen, Dienste, Diagnose und Reparaturhinweise gehen genauso.
 

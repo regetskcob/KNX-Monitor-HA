@@ -25,8 +25,8 @@ class KnxMonitorEntity(CoordinatorEntity[KnxMonitorCoordinator]):
             identifiers={(DOMAIN, DOMAIN)},
             name="Busclear",
             manufacturer=MANUFACTURER,
-            # Set up by hand: a KNX box or a Docker container, opened in the browser.
-            model="Home Assistant add-on" if slug else "KNX box or container",
+            # Set up by hand: a Busclear Box or a Docker container, opened in the browser.
+            model="Home Assistant add-on" if slug else "Busclear Box or container",
             sw_version=coordinator.data.get("version"),
             configuration_url=f"homeassistant://hassio/ingress/{slug}" if slug else f"{coordinator.api.url}/",
         )

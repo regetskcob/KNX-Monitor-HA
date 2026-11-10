@@ -16,6 +16,18 @@
           "address": "Zum Beispiel knx-box.local oder 192.168.1.20:8765. Leer lassen, um die Adresse aus dem Link zu nehmen.",
           "link": "knxmonitor://box?url=…&key=…, von /pair auf der Box."
         }
+      },
+      "reauth_confirm": {
+        "title": "Busclear neu koppeln",
+        "description": "Die Busclear Box oder der Container nimmt das Gerät von Home Assistant nicht mehr an, zum Beispiel weil es gesperrt wurde oder keine Verwaltungsrechte mehr hat. Auf der Box /pair öffnen, „Verwalten“ ankreuzen und den neuen Kopplungslink einfügen.",
+        "data": {
+          "address": "Adresse der Busclear Box oder des Containers",
+          "link": "Neuer Kopplungslink"
+        },
+        "data_description": {
+          "address": "So lassen, außer die Box hat eine neue Adresse.",
+          "link": "knxmonitor://box?url=…&key=…, von /pair auf der Box."
+        }
       }
     },
     "error": {
@@ -29,7 +41,9 @@
       "already_configured": "Busclear ist schon eingerichtet.",
       "addon_required": "Busclear wird über sein Add-on eingerichtet: Installiere und starte das Busclear-Add-on, dann bietet Home Assistant die Integration von selbst an.",
       "single_instance_allowed": "Busclear ist schon eingerichtet.",
-      "not_knx_monitor_addon": "Ein anderes Add-on hat sich als Busclear gemeldet und wurde ignoriert. Nur das Busclear-Add-on kann diese Integration einrichten."
+      "not_knx_monitor_addon": "Ein anderes Add-on hat sich als Busclear gemeldet und wurde ignoriert. Nur das Busclear-Add-on kann diese Integration einrichten.",
+      "reauth_successful": "Busclear ist wieder gekoppelt.",
+      "addon_reauth": "Das Busclear-Add-on übergibt selbst einen neuen Token. Fragt Home Assistant weiter nach, das Add-on neu starten."
     }
   },
   "device_automation": {
