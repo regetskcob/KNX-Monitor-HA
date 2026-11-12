@@ -11,7 +11,16 @@
       "bus_load": { "default": "mdi:gauge" },
       "open_alarms": { "default": "mdi:alarm-light" },
       "last_alarm": { "default": "mdi:alert" },
-      "availability_24h": { "default": "mdi:lan-check" }
+      "availability_24h": { "default": "mdi:lan-check" },
+      "health": {
+        "default": "mdi:heart-pulse",
+        "state": {
+          "ok": "mdi:check-circle-outline",
+          "hints": "mdi:information-outline",
+          "faults": "mdi:alert-circle-outline"
+        }
+      },
+      "health_findings": { "default": "mdi:format-list-checks" }
     },
     "switch": {
       "recording": { "default": "mdi:record-rec" }
@@ -19,6 +28,7 @@
   },
   "services": {
     "create_report": { "service": "mdi:file-document-outline" },
+    "run_health_check": { "service": "mdi:heart-pulse" },
     "export_history": { "service": "mdi:file-export-outline" }
   }
 }

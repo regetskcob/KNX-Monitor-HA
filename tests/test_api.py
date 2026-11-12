@@ -10,7 +10,13 @@ import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from custom_components.knx_monitor.api import KnxMonitorApi, KnxMonitorError, fingerprint_bytes
+from custom_components.knx_monitor.api import (
+    KnxMonitorApi,
+    KnxMonitorAuthError,
+    KnxMonitorError,
+    KnxMonitorNotFoundError,
+    fingerprint_bytes,
+)
 
 from .conftest import BASE, TOKEN, addon_state
 
@@ -66,3 +72,45 @@ async def test_without_fingerprint_normal_verification(hass: HomeAssistant) -> N
 def test_fingerprint_must_be_sha256() -> None:
     with pytest.raises(ValueError):
         fingerprint_bytes("AAAA")
+
+
+def _ws_session(enter: AsyncMock) -> tuple[MagicMock, MagicMock]:
+    ws_connect = MagicMock()
+    ws_connect.return_value.__aenter__ = enter
+    ws_connect.return_value.__aexit__ = AsyncMock(return_value=False)
+    return MagicMock(ws_connect=ws_connect), ws_connect
+
+
+async def test_event_channel_url_token_and_pinning(hass: HomeAssistant) -> None:
+    """Same address, token and certificate pinning as the other requests; since/epoch to resume."""
+    socket = MagicMock()
+    session, ws_connect = _ws_session(AsyncMock(return_value=socket))
+    fp = base64.urlsafe_b64encode(bytes(range(32))).decode().rstrip("=")
+    api = KnxMonitorApi(session, "192.168.1.20", 8443, TOKEN, fingerprint=fp)
+    async with api.events(since=7, epoch="e1") as ws:
+        assert ws is socket
+    args, kwargs = ws_connect.call_args
+    assert args == ("wss://192.168.1.20:8443/ws/events",)
+    assert kwargs["params"] == {"since": "7", "epoch": "e1"}
+    assert kwargs["headers"] == {"Authorization": f"Bearer {TOKEN}"}
+    assert kwargs["ssl"].fingerprint == bytes(range(32))
+
+    api = KnxMonitorApi(session, "fd00::5", 8765, TOKEN)
+    async with api.events():
+        pass
+    args, kwargs = ws_connect.call_args
+    assert args == ("ws://[fd00::5]:8765/ws/events",)
+    assert kwargs["params"] is None
+
+
+@pytest.mark.parametrize(
+    ("status", "error"),
+    [(401, KnxMonitorAuthError), (403, KnxMonitorAuthError), (404, KnxMonitorNotFoundError), (503, KnxMonitorError)],
+)
+async def test_event_channel_refused(hass: HomeAssistant, status: int, error: type[Exception]) -> None:
+    refused = aiohttp.WSServerHandshakeError(MagicMock(), (), status=status, message="Invalid response status")
+    session, _ = _ws_session(AsyncMock(side_effect=refused))
+    api = KnxMonitorApi(session, "127.0.0.1", 8765, TOKEN)
+    with pytest.raises(error):
+        async with api.events():
+            pass

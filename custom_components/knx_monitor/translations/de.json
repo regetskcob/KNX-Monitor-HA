@@ -7,7 +7,7 @@
       },
       "manual": {
         "title": "Busclear Box oder Container",
-        "description": "Busclear auf einer Busclear Box oder in einem Docker-Container. Den Link zeigt die Box unter /pair als QR-Code und Text: Dort „Verwalten“ ankreuzen, Home Assistant braucht ein Gerät mit Admin-Recht. Ohne eigenes Zertifikat der Box ist die Verbindung unverschlüsselt.",
+        "description": "Busclear auf einer Busclear Box oder in einem Docker-Container. Den Link zeigt die Box unter /pair als QR-Code und Text: Dort „Verwalten“ und „Schlüssel direkt anzeigen“ ankreuzen: Home Assistant braucht ein Gerät mit Admin-Recht und den Schlüssel selbst, nicht den Einmal-Code für die App. Ohne eigenes Zertifikat der Box ist die Verbindung unverschlüsselt.",
         "data": {
           "address": "Adresse der Busclear Box oder des Containers",
           "link": "Kopplungslink"
@@ -19,7 +19,7 @@
       },
       "reauth_confirm": {
         "title": "Busclear neu koppeln",
-        "description": "Die Busclear Box oder der Container nimmt das Gerät von Home Assistant nicht mehr an, zum Beispiel weil es gesperrt wurde oder keine Verwaltungsrechte mehr hat. Auf der Box /pair öffnen, „Verwalten“ ankreuzen und den neuen Kopplungslink einfügen.",
+        "description": "Die Busclear Box oder der Container nimmt das Gerät von Home Assistant nicht mehr an, zum Beispiel weil es gesperrt wurde oder keine Verwaltungsrechte mehr hat. Auf der Box /pair öffnen, „Verwalten“ und „Schlüssel direkt anzeigen“ ankreuzen und den neuen Kopplungslink einfügen.",
         "data": {
           "address": "Adresse der Busclear Box oder des Containers",
           "link": "Neuer Kopplungslink"
@@ -32,7 +32,7 @@
     },
     "error": {
       "cannot_connect": "Das Busclear-Add-on antwortet nicht. Läuft es?",
-      "invalid_link": "Das ist kein Kopplungslink der Box (knxmonitor://box?…&key=…), oder die Adresse ist ungültig.",
+      "invalid_link": "Das ist kein Kopplungslink der Box mit Schlüssel (knxmonitor://box?…&key=…), oder die Adresse ist ungültig. Ein Link mit code=… ist ein Einmal-Code für die App: auf /pair „Schlüssel direkt anzeigen“ ankreuzen.",
       "box_unreachable": "Box nicht erreichbar. Prüfe die Adresse und ob die Box Zugriff aus dem Netzwerk erlaubt.",
       "invalid_auth": "Link ungültig oder Gerät gesperrt. Das Gerät braucht Admin-Recht („Verwalten“ auf /pair), und die Box muss Zugriff aus dem Netzwerk erlauben.",
       "tls_mismatch": "Zertifikat passt nicht zum Link. Auf /pair neu koppeln und den neuen Link nehmen."
@@ -147,6 +147,34 @@
       },
       "free_space": {
         "name": "Freier Speicher"
+      },
+      "health": {
+        "name": "Gesundheit",
+        "state": {
+          "ok": "In Ordnung",
+          "hints": "Hinweise",
+          "faults": "Fehler"
+        },
+        "state_attributes": {
+          "last_run": {
+            "name": "Letzter Lauf"
+          },
+          "findings": {
+            "name": "Befunde"
+          },
+          "errors": {
+            "name": "Fehler"
+          },
+          "warnings": {
+            "name": "Warnungen"
+          },
+          "infos": {
+            "name": "Hinweise"
+          }
+        }
+      },
+      "health_findings": {
+        "name": "Befunde der Gesundheitsprüfung"
       }
     },
     "switch": {
@@ -164,6 +192,12 @@
     },
     "export_running": {
       "message": "Ein Export des Busclear-Verlaufs läuft schon. Warte, bis er fertig ist."
+    },
+    "health_check_off": {
+      "message": "Die Gesundheitsprüfung ist am Busclear-Server ausgeschaltet. Im Add-on die Option „Gesundheitsprüfung für Home Assistant“ (health_check) einschalten, bei Docker und der Busclear Box HEALTH_CHECK=true setzen, und neu starten."
+    },
+    "health_check_unsupported": {
+      "message": "Dieser Busclear-Server hat noch keine Gesundheitsprüfung. Add-on, Container oder Box aktualisieren."
     }
   },
   "issues": {
@@ -228,6 +262,10 @@
           "description": "Der ganze Verlauf als ZIP mit einer Datei pro Tag, statt der Tage oben."
         }
       }
+    },
+    "run_health_check": {
+      "name": "Gesundheitsprüfung starten",
+      "description": "Startet die Gesundheitsprüfung des Busclear-Servers jetzt und liefert das Ergebnis: Zustand, Anzahlen und die Befunde mit Adresse, Name und Art. Der Server liest dafür nur seinen aufgezeichneten Verlauf und sendet nichts auf den Bus. Die Gesundheitsprüfung muss am Server eingeschaltet sein."
     }
   }
 }

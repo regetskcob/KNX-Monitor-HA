@@ -12,6 +12,14 @@ from custom_components.knx_monitor.const import DOMAIN
 BASE = "http://127.0.0.1:8765"
 TOKEN = "a" * 64
 
+# `health_check` of GET /api/ha/state while the server's health check is on.
+HEALTH = {
+    "enabled": True,
+    "status": "faults",
+    "time": "2026-11-11T02:00:00.000Z",
+    "counts": {"total": 3, "errors": 1, "warnings": 2, "infos": 0, "by_kind": {"dpt_size": 1, "stuck": 2}},
+}
+
 
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations):

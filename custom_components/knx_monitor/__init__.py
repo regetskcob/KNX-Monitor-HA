@@ -3,15 +3,15 @@
 Sensors, recording switch, event entities, device triggers and conditions,
 services, diagnostics and repairs for the Busclear add-on. Set up through
 the add-on's discovery, or by hand for a Busclear Box or a Docker container with a
-pairing link; while set up, the server stops announcing the same entities over
-MQTT.
+pairing link (events then come through the server's event channel, events.py);
+while set up, the server stops announcing the same entities over MQTT.
 """
 
 from __future__ import annotations
 
 import logging
 
-from homeassistant.const import CONF_HOST, CONF_PORT, Platform
+from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
@@ -20,14 +20,10 @@ from homeassistant.helpers.typing import ConfigType
 
 from .api import KnxMonitorApi, KnxMonitorError
 from .const import CONF_FINGERPRINT, CONF_SSL, CONF_TOKEN, DOMAIN
-from .coordinator import KnxMonitorConfigEntry, KnxMonitorCoordinator, has_events
+from .coordinator import KnxMonitorConfigEntry, KnxMonitorCoordinator
 from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
-
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.SWITCH]
-# Event entities only where the add-on's events arrive (through the Supervisor).
-EVENT_PLATFORMS = [*PLATFORMS, Platform.EVENT]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -49,10 +45,6 @@ def _api(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -> KnxMonitorApi:
     )
 
 
-def _platforms(entry: KnxMonitorConfigEntry) -> list[Platform]:
-    return EVENT_PLATFORMS if has_events(entry) else PLATFORMS
-
-
 async def async_setup_entry(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -> bool:
     """Connect to the add-on and take over the entities from MQTT."""
     coordinator = KnxMonitorCoordinator(hass, entry, _api(hass, entry))
@@ -65,13 +57,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -
             raise ConfigEntryNotReady(f"Busclear: could not take over the MQTT entities: {err}") from err
     entry.runtime_data = coordinator
     coordinator.listen_for_watchers()
-    await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
+    await hass.config_entries.async_forward_entry_setups(entry, coordinator.platforms)
+    # Box or container: their events come through the event channel (after the
+    # entities, so they do not miss the first ones).
+    coordinator.start_channel()
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -> bool:
     """Unload the platforms."""
-    return await hass.config_entries.async_unload_platforms(entry, _platforms(entry))
+    return await hass.config_entries.async_unload_platforms(entry, entry.runtime_data.platforms)
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: KnxMonitorConfigEntry) -> None:

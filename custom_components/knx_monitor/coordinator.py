@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import issue_registry as ir
@@ -16,15 +18,18 @@ from homeassistant.util import dt as dt_util
 
 from .api import KnxMonitorApi, KnxMonitorAuthError, KnxMonitorError, KnxMonitorNotFoundError
 from .const import (
+    ATTR_CONFIG_ENTRY_ID,
     BUS_LOST_REPAIR_AFTER,
     CONF_SLUG,
     DOMAIN,
     EVENT_WATCHER,
+    EVENTS_FORMAT,
     SCAN_INTERVAL,
     SILENT_SUMMARY_FROM,
     WATCHERS_INTERVAL,
     WATCHERS_RELOAD_MIN,
 )
+from .events import EventChannelClient
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,14 +45,26 @@ def silent_issue_id(address: str) -> str:
     return SILENT_PREFIX + re.sub(r"[^0-9A-Za-z]", "_", address)
 
 
-def has_events(entry: ConfigEntry) -> bool:
-    """Whether the add-on's events reach Home Assistant.
+def via_supervisor(entry: ConfigEntry) -> bool:
+    """Whether the entry is the add-on, set up through the Supervisor's discovery.
 
-    The add-on fires them through the Supervisor. A Busclear Box or a container set
-    up by hand has no way to do that yet, so its entry has no event entities
-    and no device triggers.
+    The add-on fires its events on Home Assistant's event bus itself. A Busclear Box
+    or a container set up by hand gets them through its event channel instead
+    (events.py), if the server has one.
     """
     return CONF_SLUG in entry.data
+
+
+def owns_event(entry: ConfigEntry, data: Mapping[str, Any]) -> bool:
+    """Whether an event on the bus is [entry]'s (see KnxMonitorCoordinator.owns_event)."""
+    if via_supervisor(entry):
+        return ATTR_CONFIG_ENTRY_ID not in data
+    return data.get(ATTR_CONFIG_ENTRY_ID) == entry.entry_id
+
+
+def has_channel(data: dict[str, Any]) -> bool:
+    """Whether the server has the event channel in our format (`events` in the state, since 1.12.0)."""
+    return data.get("events") == EVENTS_FORMAT
 
 
 class KnxMonitorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -64,12 +81,38 @@ class KnxMonitorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._watchers_at: datetime | None = None
         # Last answer of /api/ha/silent, for the repairs and the fix flow.
         self.silent: list[dict[str, Any]] = []
+        # Whether events reach Home Assistant: through the Supervisor, or the event
+        # channel of a box or container (decided with the first answer).
+        self.has_events = via_supervisor(entry)
+        self.channel: EventChannelClient | None = None
+
+    @property
+    def platforms(self) -> list[Platform]:
+        """Platforms of the entry: event entities only where events arrive."""
+        base = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.SWITCH]
+        return [*base, Platform.EVENT] if self.has_events else base
+
+    def start_channel(self) -> None:
+        """Box or container: listen to its event channel while the entry is loaded."""
+        if self.has_events and not via_supervisor(self.config_entry) and self.channel is None:
+            self.channel = EventChannelClient(self.hass, self.config_entry, self.api)
+            self.channel.start()
+
+    def owns_event(self, data: Mapping[str, Any]) -> bool:
+        """Whether an event on the bus is this entry's.
+
+        The add-on fires its events through the Supervisor without a marker; it
+        takes only those, never what an event channel of a box fired (marked with
+        `config_entry_id`). A box or container takes only what its own event
+        channel fired, never the events of an add-on next to it.
+        """
+        return owns_event(self.config_entry, data)
 
     async def _async_update_data(self) -> dict[str, Any]:
         try:
             data = await self.api.state()
         except KnxMonitorAuthError as err:
-            if not has_events(self.config_entry):
+            if not via_supervisor(self.config_entry):
                 # Busclear Box or container: the device was revoked or lost its admin
                 # rights. Home Assistant asks for a new pairing link (reauth).
                 raise ConfigEntryAuthFailed(f"Busclear refused the pairing key: {err}") from err
@@ -77,9 +120,14 @@ class KnxMonitorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(f"Busclear add-on refused the token: {err}") from err
         except KnxMonitorError as err:
             raise UpdateFailed(f"Busclear add-on not reachable: {err}") from err
+        if self.data is None:
+            self.has_events = via_supervisor(self.config_entry) or has_channel(data)
+        elif not self.has_events and has_channel(data):
+            # The box or container was updated to a version with the event channel.
+            self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
         self._update_repairs(data)
         await self._update_silent(data)
-        if has_events(self.config_entry):
+        if self.has_events:
             await self._update_watchers()
         return data
 
@@ -101,6 +149,8 @@ class KnxMonitorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     @callback
     def async_watcher_event(self, event: Event) -> None:
         """A watcher fired: an id we do not know means the list changed."""
+        if not self.owns_event(event.data):
+            return
         watcher_id = event.data.get("watcher_id")
         if self.watchers is None or not isinstance(watcher_id, str) or watcher_id in self.watchers:
             return
@@ -109,8 +159,8 @@ class KnxMonitorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     def listen_for_watchers(self) -> None:
-        """Follows the add-on's watcher events while the entry is loaded."""
-        if has_events(self.config_entry):
+        """Follows the watcher events while the entry is loaded."""
+        if self.has_events:
             self.config_entry.async_on_unload(self.hass.bus.async_listen(EVENT_WATCHER, self.async_watcher_event))
 
     async def _update_silent(self, data: dict[str, Any]) -> None:

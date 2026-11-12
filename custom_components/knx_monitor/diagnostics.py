@@ -25,4 +25,6 @@ async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: KnxMoni
         "entry": async_redact_data(dict(entry.data), REDACT),
         "state": async_redact_data(coordinator.data or {}, REDACT),
         "addon": addon,
+        # Box or container: the event channel (no event contents).
+        "events": coordinator.channel.diagnostics() if coordinator.channel else None,
     }

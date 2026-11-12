@@ -7,7 +7,7 @@
       },
       "manual": {
         "title": "Busclear Box or container",
-        "description": "Busclear on a Busclear Box or in a Docker container. The box shows the pairing link under /pair as QR code and text: tick \"Manage\" there, Home Assistant needs a device with admin rights. Without the box's own certificate the connection is not encrypted.",
+        "description": "Busclear on a Busclear Box or in a Docker container. The box shows the pairing link under /pair as QR code and text: tick \"Manage\" (Verwalten) and \"Show key directly\" (Schlüssel direkt anzeigen) there: Home Assistant needs a device with admin rights and the key itself, not the one-time code for the app. Without the box's own certificate the connection is not encrypted.",
         "data": {
           "address": "Address of the Busclear Box or container",
           "link": "Pairing link"
@@ -19,7 +19,7 @@
       },
       "reauth_confirm": {
         "title": "Pair Busclear again",
-        "description": "The Busclear Box or container no longer accepts Home Assistant's device, for example because it was revoked or lost its admin rights. Open /pair on the box, tick \"Manage\" and paste the new pairing link.",
+        "description": "The Busclear Box or container no longer accepts Home Assistant's device, for example because it was revoked or lost its admin rights. Open /pair on the box, tick \"Manage\" and \"Show key directly\" and paste the new pairing link.",
         "data": {
           "address": "Address of the Busclear Box or container",
           "link": "New pairing link"
@@ -32,7 +32,7 @@
     },
     "error": {
       "cannot_connect": "The Busclear add-on does not answer. Is it running?",
-      "invalid_link": "That is not a pairing link of the box (knxmonitor://box?…&key=…), or the address is not valid.",
+      "invalid_link": "That is not a pairing link of the box with a key (knxmonitor://box?…&key=…), or the address is not valid. A link with code=… is a one-time code for the app: tick \"Show key directly\" (Schlüssel direkt anzeigen) on /pair.",
       "box_unreachable": "Box not reachable. Check the address and whether the box allows access from the network.",
       "invalid_auth": "Link invalid or device revoked. The device needs admin rights (\"Manage\" on /pair), and the box must allow access from the network.",
       "tls_mismatch": "Certificate does not match the link. Pair again on /pair and use the new link."
@@ -147,6 +147,34 @@
       },
       "free_space": {
         "name": "Free space"
+      },
+      "health": {
+        "name": "Health",
+        "state": {
+          "ok": "OK",
+          "hints": "Hints",
+          "faults": "Faults"
+        },
+        "state_attributes": {
+          "last_run": {
+            "name": "Last run"
+          },
+          "findings": {
+            "name": "Findings"
+          },
+          "errors": {
+            "name": "Faults"
+          },
+          "warnings": {
+            "name": "Warnings"
+          },
+          "infos": {
+            "name": "Hints"
+          }
+        }
+      },
+      "health_findings": {
+        "name": "Health findings"
       }
     },
     "switch": {
@@ -164,6 +192,12 @@
     },
     "export_running": {
       "message": "An export of the Busclear history is already running. Wait until it has finished."
+    },
+    "health_check_off": {
+      "message": "The health check is switched off on the Busclear server. Switch on the add-on option \"Health check for Home Assistant\" (health_check), or set HEALTH_CHECK=true for Docker and the Busclear Box, and restart it."
+    },
+    "health_check_unsupported": {
+      "message": "This Busclear server has no health check yet. Update the add-on, the container or the box."
     }
   },
   "issues": {
@@ -228,6 +262,10 @@
           "description": "The whole history as zip with one file per day, instead of the days above."
         }
       }
+    },
+    "run_health_check": {
+      "name": "Run health check",
+      "description": "Runs the health check of the Busclear server now and returns the result: state, counts and the findings with address, name and kind. The server only reads its recorded history and sends nothing on the bus. The health check must be switched on on the server."
     }
   }
 }

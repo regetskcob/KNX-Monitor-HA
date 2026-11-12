@@ -10,6 +10,9 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .coordinator import KnxMonitorConfigEntry
 from .entity import KnxMonitorEntity
 
+# The coordinator fetches for all entities at once; nothing here calls the server per entity.
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: KnxMonitorConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback

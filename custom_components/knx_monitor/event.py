@@ -8,13 +8,17 @@ from homeassistant.components.event import EventEntity
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import EVENT_ALARM, EVENT_WATCHER
+from .const import ATTR_CONFIG_ENTRY_ID, EVENT_ALARM, EVENT_WATCHER
 from .coordinator import KnxMonitorConfigEntry, KnxMonitorCoordinator
 from .entity import KnxMonitorEntity
 
 # Same event types as the MQTT device (mqtt_bridge.dart).
 WATCHER_TYPES = ["fired"]
 ALARM_TYPES = ["alarm_on", "alarm_off", "fault_on", "fault_off"]
+
+
+# Events are pushed by the server; nothing here calls it.
+PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
@@ -25,7 +29,11 @@ async def async_setup_entry(
 
 
 class KnxMonitorEvent(KnxMonitorEntity, EventEntity):
-    """Follows one of the add-on's Home Assistant events; no extra channel needed."""
+    """Follows one of the server's events on Home Assistant's bus.
+
+    The add-on fires them through the Supervisor; for a box or container the
+    event channel does (events.py), marked with the entry.
+    """
 
     _event: str
 
@@ -35,11 +43,13 @@ class KnxMonitorEvent(KnxMonitorEntity, EventEntity):
 
     @callback
     def _handle(self, event: Event) -> None:
+        if not self.coordinator.owns_event(event.data):
+            return
         event_type = self._type(event.data)
         if event_type is None:
             return
-        # The event data as attributes, as the MQTT device has them.
-        self._trigger_event(event_type, dict(event.data))
+        # The event data as attributes, as the MQTT device has them (without the entry marker).
+        self._trigger_event(event_type, {k: v for k, v in event.data.items() if k != ATTR_CONFIG_ENTRY_ID})
         self.async_write_ha_state()
 
     def _type(self, data: dict[str, Any]) -> str | None:

@@ -1,4 +1,4 @@
-"""Services: create the installation report, export the history."""
+"""Services: create the installation report, export the history, run the health check."""
 
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.service import async_register_admin_service
 
-from .api import KnxMonitorError
-from .const import DOMAIN, SERVICE_CREATE_REPORT, SERVICE_EXPORT_HISTORY
+from .api import KnxMonitorError, KnxMonitorNotEnabledError, KnxMonitorNotFoundError
+from .const import DOMAIN, SERVICE_CREATE_REPORT, SERVICE_EXPORT_HISTORY, SERVICE_RUN_HEALTH_CHECK
 from .coordinator import KnxMonitorCoordinator
 
 EXPORT_SCHEMA = vol.Schema(
@@ -53,8 +53,9 @@ def _too_large() -> HomeAssistantError:
 def async_setup_services(hass: HomeAssistant) -> None:
     """Register the services of Busclear.
 
-    Both only for administrators: the report and the history name the whole
-    installation, and the export writes into the configuration directory.
+    All only for administrators: the report, the history and the findings of
+    the health check name the whole installation, and the export writes into
+    the configuration directory.
     """
     # One export at a time: two parallel downloads of the whole history would
     # double the load on the add-on and on the disk.
@@ -77,8 +78,26 @@ def async_setup_services(hass: HomeAssistant) -> None:
             except KnxMonitorError as err:
                 raise HomeAssistantError(f"Busclear: {err}") from err
 
+    async def run_health_check(call: ServiceCall) -> ServiceResponse:
+        coordinator = _coordinator(hass)
+        try:
+            result = await coordinator.api.run_health_check()
+        except KnxMonitorNotEnabledError as err:
+            # Off on the server: say where to switch it on instead of "HTTP 409".
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="health_check_off") from err
+        except KnxMonitorNotFoundError as err:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="health_check_unsupported") from err
+        except KnxMonitorError as err:
+            raise HomeAssistantError(f"Busclear: {err}") from err
+        # The sensors show the new result at once, not at the next poll.
+        await coordinator.async_request_refresh()
+        return result
+
     async_register_admin_service(
         hass, DOMAIN, SERVICE_CREATE_REPORT, create_report, supports_response=SupportsResponse.OPTIONAL
+    )
+    async_register_admin_service(
+        hass, DOMAIN, SERVICE_RUN_HEALTH_CHECK, run_health_check, supports_response=SupportsResponse.OPTIONAL
     )
     async_register_admin_service(
         hass,

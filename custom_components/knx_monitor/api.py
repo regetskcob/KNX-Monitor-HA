@@ -9,7 +9,11 @@ from typing import Any
 
 import aiohttp
 
+from .const import EVENTS_PATH
+
 TIMEOUT = aiohttp.ClientTimeout(total=15)
+# The health check reads two days of history on the server (seconds on a Raspberry Pi).
+HEALTH_TIMEOUT = aiohttp.ClientTimeout(total=120)
 # Exports read weeks of history on the add-on.
 EXPORT_TIMEOUT = aiohttp.ClientTimeout(total=600)
 
@@ -24,6 +28,10 @@ class KnxMonitorAuthError(KnxMonitorError):
 
 class KnxMonitorNotFoundError(KnxMonitorError):
     """The endpoint does not exist (older add-on) or the item is gone."""
+
+
+class KnxMonitorNotEnabledError(KnxMonitorError):
+    """The server has the feature, but it is switched off there (HTTP 409)."""
 
 
 class KnxMonitorTlsError(KnxMonitorError):
@@ -110,12 +118,52 @@ class KnxMonitorApi:
                     raise KnxMonitorAuthError(f"HTTP {resp.status}")
                 if resp.status == 404:
                     raise KnxMonitorNotFoundError(f"HTTP {resp.status}")
+                if resp.status == 409:
+                    raise KnxMonitorNotEnabledError(f"HTTP {resp.status}")
                 if resp.status >= 300:
                     raise KnxMonitorError(f"HTTP {resp.status}")
                 self._base = self._url
                 yield resp
         except KnxMonitorError:
             raise
+        except aiohttp.ServerFingerprintMismatch as err:
+            raise KnxMonitorTlsError(str(err)) from err
+        except (TimeoutError, aiohttp.ClientError) as err:
+            raise KnxMonitorError(str(err) or type(err).__name__) from err
+
+    @asynccontextmanager
+    async def events(
+        self, *, since: int | None = None, epoch: str | None = None
+    ) -> AsyncIterator[aiohttp.ClientWebSocketResponse]:
+        """The event channel `/ws/events`, open while in the block.
+
+        With `since` and `epoch` of the last connection the server sends the
+        events missed in between, as far as it still has them. aiohttp drops
+        the token on a redirect to another address; the handshake fails on any
+        redirect anyway.
+        """
+        params = {"since": str(since), "epoch": epoch} if since is not None and epoch else None
+        try:
+            async with self._session.ws_connect(
+                f"{'wss' if self._url.startswith('https') else 'ws'}{self._url[self._url.index(':') :]}{EVENTS_PATH}",
+                params=params,
+                headers={"Authorization": f"Bearer {self._token}"},
+                ssl=self._ssl,
+                timeout=aiohttp.ClientWSTimeout(ws_close=10),
+                # The server pings every 20 seconds; nothing big ever comes.
+                autoping=True,
+                max_msg_size=1024 * 1024,
+            ) as ws:
+                self._base = self._url
+                yield ws
+        except KnxMonitorError:
+            raise
+        except aiohttp.WSServerHandshakeError as err:
+            if err.status in (401, 403):
+                raise KnxMonitorAuthError(f"HTTP {err.status}") from err
+            if err.status == 404:
+                raise KnxMonitorNotFoundError(f"HTTP {err.status}") from err
+            raise KnxMonitorError(f"HTTP {err.status}") from err
         except aiohttp.ServerFingerprintMismatch as err:
             raise KnxMonitorTlsError(str(err)) from err
         except (TimeoutError, aiohttp.ClientError) as err:
@@ -173,3 +221,16 @@ class KnxMonitorApi:
     async def ignore_silent(self, address: str) -> None:
         """No longer reports `address` until it sends again."""
         await self._request("POST", "/api/ha/silent/ignore", json={"address": address})
+
+    async def run_health_check(self) -> dict[str, Any]:
+        """Runs the server's health check now and returns its result.
+
+        The server only reads its history for it and sends nothing on the bus.
+        KnxMonitorNotEnabledError while the feature is off on the server,
+        KnxMonitorNotFoundError on servers that do not have it.
+        """
+        return await self._request("POST", "/api/ha/health/run", json={}, timeout=HEALTH_TIMEOUT)
+
+    async def health(self) -> dict[str, Any]:
+        """The last result of the server's health check, with its findings."""
+        return await self._request("GET", "/api/ha/health")

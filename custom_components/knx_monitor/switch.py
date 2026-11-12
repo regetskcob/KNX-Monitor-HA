@@ -13,6 +13,9 @@ from .api import KnxMonitorError
 from .coordinator import KnxMonitorConfigEntry
 from .entity import KnxMonitorEntity
 
+# One change of the recording at a time.
+PARALLEL_UPDATES = 1
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: KnxMonitorConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback

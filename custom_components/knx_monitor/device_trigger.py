@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import voluptuous as vol
 from homeassistant.components.device_automation import DEVICE_TRIGGER_BASE_SCHEMA
-from homeassistant.components.homeassistant.triggers import event as event_trigger
-from homeassistant.config_entries import ConfigEntryState
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_DEVICE_ID, CONF_DOMAIN, CONF_PLATFORM, CONF_TYPE
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant
+from homeassistant.core import CALLBACK_TYPE, Event, HassJob, HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.trigger import TriggerActionType, TriggerInfo
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN, EVENT_ALARM, EVENT_BUS, EVENT_WATCHER
-from .coordinator import KnxMonitorCoordinator, has_events
+from .coordinator import KnxMonitorCoordinator, owns_event
 
 CONF_SUBTYPE = "subtype"
 CONF_WATCHER_ID = "watcher_id"
@@ -49,26 +49,32 @@ TRIGGER_SCHEMA = vol.Any(
 )
 
 
-def _coordinator(hass: HomeAssistant, device_id: str) -> KnxMonitorCoordinator | None:
+def _entry(hass: HomeAssistant, device_id: str) -> ConfigEntry | None:
+    """The device's entry, loaded or not (automations attach before it loads)."""
     device = dr.async_get(hass).async_get(device_id)
     if device is None:
         return None
     for entry_id in device.config_entries:
         entry = hass.config_entries.async_get_entry(entry_id)
-        if entry is not None and entry.domain == DOMAIN and entry.state is ConfigEntryState.LOADED:
-            return entry.runtime_data
+        if entry is not None and entry.domain == DOMAIN:
+            return entry
     return None
+
+
+def _coordinator(hass: HomeAssistant, device_id: str) -> KnxMonitorCoordinator | None:
+    entry = _entry(hass, device_id)
+    return entry.runtime_data if entry is not None and entry.state is ConfigEntryState.LOADED else None
 
 
 async def async_get_triggers(hass: HomeAssistant, device_id: str) -> list[dict[str, Any]]:
     """All triggers of the device "Busclear": the general ones and one per watcher.
 
-    None for a Busclear Box or container set up by hand: their events do not reach
-    Home Assistant yet. Add-ons before 1.9.10 have no watcher list; then only the
+    None for a Busclear Box or container whose server has no event channel yet
+    (before 1.12.0). Add-ons before 1.9.10 have no watcher list; then only the
     general watcher trigger is offered.
     """
     coordinator = _coordinator(hass, device_id)
-    if coordinator is not None and not has_events(coordinator.config_entry):
+    if coordinator is not None and not coordinator.has_events:
         return []
     base = {CONF_PLATFORM: "device", CONF_DOMAIN: DOMAIN, CONF_DEVICE_ID: device_id}
     triggers = [{**base, CONF_TYPE: trigger} for trigger in TRIGGERS]
@@ -84,16 +90,40 @@ async def async_attach_trigger(
     action: TriggerActionType,
     trigger_info: TriggerInfo,
 ) -> CALLBACK_TYPE:
-    """Listen for the add-on's event that belongs to the trigger."""
+    """Listen for the server's event that belongs to the trigger.
+
+    Only events of this device's entry (owns_event): the add-on takes those
+    without a marker, a box or container those its event channel fired. A plain
+    event trigger cannot ask for a missing key, hence the own listener; the
+    variables are the same as an event trigger's (`trigger.event`).
+    """
     if config[CONF_TYPE] == WATCHER_TRIGGER:
         event_type, event_data = EVENT_WATCHER, {CONF_WATCHER_ID: config[CONF_WATCHER_ID]}
     else:
         event_type, event_data = TRIGGERS[config[CONF_TYPE]]
-    event_config = event_trigger.TRIGGER_SCHEMA(
-        {
-            event_trigger.CONF_PLATFORM: "event",
-            event_trigger.CONF_EVENT_TYPE: event_type,
-            event_trigger.CONF_EVENT_DATA: event_data,
-        }
-    )
-    return await event_trigger.async_attach_trigger(hass, event_config, action, trigger_info, platform_type="device")
+    entry = _entry(hass, config[CONF_DEVICE_ID])
+    wanted = event_data.items()
+    job = HassJob(action, f"knx_monitor device trigger {trigger_info}")
+    trigger_data = trigger_info["trigger_data"]
+
+    @callback
+    def matches(data: Mapping[str, Any]) -> bool:
+        # Without an entry (device removed) nothing is ours.
+        return entry is not None and data.items() >= wanted and owns_event(entry, data)
+
+    @callback
+    def handle(event: Event) -> None:
+        hass.async_run_hass_job(
+            job,
+            {
+                "trigger": {
+                    **trigger_data,
+                    "platform": "device",
+                    "event": event,
+                    "description": f"event '{event.event_type}'",
+                }
+            },
+            event.context,
+        )
+
+    return hass.bus.async_listen(event_type, handle, event_filter=matches)
