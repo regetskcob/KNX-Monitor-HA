@@ -171,7 +171,12 @@ class KnxMonitorApi:
 
     async def _request(self, method: str, path: str, **kwargs: Any) -> Any:
         async with self._open(method, path, **kwargs) as resp:
-            return await resp.json(content_type=None)
+            try:
+                return await resp.json(content_type=None)
+            except ValueError as err:
+                # 200 without JSON (a proxy's error page, a cut-off answer): an
+                # error like any other, not an unhandled exception in the caller.
+                raise KnxMonitorError("answer is not JSON") from err
 
     async def state(self) -> dict[str, Any]:
         """Key figures, connection state and version."""

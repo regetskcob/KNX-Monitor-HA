@@ -1,4 +1,4 @@
 # Pinned so the CI tests against a known Home Assistant; Dependabot proposes
 # updates (.github/dependabot.yml). The version also pins Home Assistant.
 pytest-homeassistant-custom-component==0.13.375
-ruff==0.17.3
+ruff==0.17.4

@@ -17,7 +17,15 @@ import aiohttp
 from homeassistant.core import EventOrigin, HomeAssistant
 
 from .api import KnxMonitorApi, KnxMonitorAuthError, KnxMonitorError, KnxMonitorNotFoundError
-from .const import ATTR_CONFIG_ENTRY_ID, EVENT_ALARM, EVENT_BUS, EVENT_WATCHER, EVENTS_BACKOFF, EVENTS_FORMAT
+from .const import (
+    ATTR_CONFIG_ENTRY_ID,
+    EVENT_ALARM,
+    EVENT_BUS,
+    EVENT_WATCHER,
+    EVENTS_BACKOFF,
+    EVENTS_FORMAT,
+    EVENTS_STABLE_AFTER,
+)
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -49,6 +57,11 @@ class EventChannelClient:
         self._timeout = float(DEFAULT_HEARTBEAT * MISSED_HEARTBEATS)
         # Lost and already logged once: the next hello says it is back.
         self._lost = False
+        # When the current connection said hello (loop time), to tell a real
+        # connection from one that is closed again at once.
+        self._connected_at: float | None = None
+        # The server answered 404 and that was logged.
+        self._missing = False
 
     def start(self) -> None:
         """Runs until the entry is unloaded (the task ends with it)."""
@@ -66,10 +79,13 @@ class EventChannelClient:
                 self._entry.async_start_reauth(self._hass)
                 return
             except KnxMonitorNotFoundError:
-                # Server went back to a version without the channel: stay as before it.
-                self.connected = False
-                _LOGGER.info("Busclear: the server has no event channel any more; events stay off until reloaded")
-                return
+                # Server went back to a version without the channel, or it is just
+                # being updated: ask again at the longest pause, so the events come
+                # back with the channel instead of staying off until a reload.
+                if not self._missing:
+                    _LOGGER.info("Busclear: the server has no event channel at the moment; asking again every minute")
+                self._missing = True
+                failures = len(EVENTS_BACKOFF) - 1
             except KnxMonitorError as err:
                 # Once per outage, not on every attempt.
                 if not self._lost:
@@ -77,9 +93,13 @@ class EventChannelClient:
                 else:
                     _LOGGER.debug("Busclear: event channel still unreachable: %s", err)
                 self._lost = True
-            if self.connected:
-                # It was up: start again with the shortest pause.
+            connected_at = self._connected_at
+            if connected_at is not None and self._hass.loop.time() - connected_at >= EVENTS_STABLE_AFTER:
+                # It was up for a while: start again with the shortest pause. A
+                # server that accepts and closes at once does not reset it,
+                # otherwise this would reconnect every second for good.
                 failures = 0
+            self._connected_at = None
             self.connected = False
             await asyncio.sleep(EVENTS_BACKOFF[min(failures, len(EVENTS_BACKOFF) - 1)])
             failures += 1
@@ -142,6 +162,8 @@ class EventChannelClient:
             self.epoch = epoch if isinstance(epoch, str) else None
             self.seq = seq
         self.connected = True
+        self._connected_at = self._hass.loop.time()
+        self._missing = False
         if self._lost:
             _LOGGER.info("Busclear: event channel connected again")
             self._lost = False

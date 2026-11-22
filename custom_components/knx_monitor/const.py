@@ -30,6 +30,9 @@ EVENTS_FORMAT: Final = 1
 ATTR_CONFIG_ENTRY_ID: Final = "config_entry_id"
 # Seconds between attempts after the channel was lost, the last one repeats.
 EVENTS_BACKOFF: Final = (1, 2, 5, 10, 30, 60)
+# A connection that held this long was a real one: the next pause starts short
+# again. One that the server accepts and closes right away keeps backing off.
+EVENTS_STABLE_AFTER: Final = 30.0
 
 SCAN_INTERVAL: Final = timedelta(seconds=30)
 

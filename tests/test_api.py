@@ -114,3 +114,11 @@ async def test_event_channel_refused(hass: HomeAssistant, status: int, error: ty
     with pytest.raises(error):
         async with api.events():
             pass
+
+
+async def test_answer_without_json_is_an_error(hass: HomeAssistant, aioclient_mock) -> None:
+    """A 200 that is not JSON (a proxy's page) is a KnxMonitorError, not a stray ValueError."""
+    aioclient_mock.get(f"{BASE}/api/ha/state", text="<html>Bad gateway</html>")
+    api = KnxMonitorApi(async_get_clientsession(hass), "127.0.0.1", 8765, TOKEN)
+    with pytest.raises(KnxMonitorError):
+        await api.state()

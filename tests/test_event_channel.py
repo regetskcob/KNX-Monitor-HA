@@ -7,7 +7,7 @@ import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import aiohttp
 import pytest
@@ -19,7 +19,12 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import async_get_device_automations
 
-from custom_components.knx_monitor.api import KnxMonitorApi, KnxMonitorAuthError, KnxMonitorError
+from custom_components.knx_monitor.api import (
+    KnxMonitorApi,
+    KnxMonitorAuthError,
+    KnxMonitorError,
+    KnxMonitorNotFoundError,
+)
 from custom_components.knx_monitor.const import DOMAIN
 from custom_components.knx_monitor.events import EventChannelClient
 
@@ -306,3 +311,61 @@ async def test_addon_ignores_events_of_a_box_next_to_it(hass: HomeAssistant, ent
     assert hass.states.get("event.busclear_alarm").attributes["event_type"] == "alarm_on"
     assert len(alarms) == 1 and len(watcher) == 1
     assert watcher[0].data["id"] == "w1"
+
+
+class _Stop(Exception):
+    """Ends the client's endless loop in the pause tests."""
+
+
+async def _pauses(hass: HomeAssistant, box_entry, fake: FakeChannel, count: int, *, stable: float) -> list[float]:
+    """Runs the client until it paused [count] times; returns the pauses."""
+    pauses: list[float] = []
+
+    async def sleep(seconds: float) -> None:
+        pauses.append(seconds)
+        if len(pauses) == count:
+            raise _Stop
+
+    client = EventChannelClient(hass, box_entry, KnxMonitorApi(MagicMock(), "127.0.0.1", 8765, "t"))
+    with (
+        fake.patch(),
+        patch("custom_components.knx_monitor.events.EVENTS_BACKOFF", (1, 2, 5)),
+        patch("custom_components.knx_monitor.events.EVENTS_STABLE_AFTER", stable),
+        patch("custom_components.knx_monitor.events.asyncio.sleep", sleep),
+        pytest.raises(_Stop),
+    ):
+        await client._run()
+    return pauses
+
+
+async def test_server_that_closes_at_once_keeps_backing_off(hass: HomeAssistant, box_entry) -> None:
+    """Accepted and closed right away, again and again: not a reconnect every second."""
+    fake = FakeChannel()
+    for _ in range(4):
+        socket = fake.accept()
+        socket.send(hello())
+        socket.close()
+    assert await _pauses(hass, box_entry, fake, 4, stable=30.0) == [1, 2, 5, 5]
+
+
+async def test_connection_that_held_starts_with_the_short_pause(hass: HomeAssistant, box_entry) -> None:
+    fake = FakeChannel()
+    fake.refuse(KnxMonitorError("connection refused"))
+    fake.refuse(KnxMonitorError("connection refused"))
+    socket = fake.accept()
+    socket.send(hello())
+    socket.close()
+    # stable=0: every connection that said hello counts as one that held.
+    assert await _pauses(hass, box_entry, fake, 3, stable=0.0) == [1, 2, 1]
+
+
+async def test_missing_channel_is_asked_again(hass: HomeAssistant, box_entry) -> None:
+    """A 404 (server being updated or rolled back) does not end the channel for good."""
+    fake = FakeChannel()
+    fake.refuse(KnxMonitorNotFoundError("HTTP 404"))
+    socket = fake.accept()
+    socket.send(hello())
+    socket.close()
+    # The longest pause after the 404, and the channel is back afterwards.
+    assert (await _pauses(hass, box_entry, fake, 2, stable=0.0)) == [5, 1]
+    assert len(fake.connects) == 2

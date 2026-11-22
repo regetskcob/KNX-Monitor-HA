@@ -125,6 +125,16 @@ class KnxMonitorCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         elif not self.has_events and has_channel(data):
             # The box or container was updated to a version with the event channel.
             self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
+        if self.data is not None and not data.get("claimed"):
+            # The server gives the MQTT entities back after an hour without a
+            # request (Home Assistant down, network away). Take them over again,
+            # otherwise the device shows up twice until the entry is reloaded.
+            # The first refresh leaves this to async_setup_entry.
+            try:
+                await self.api.claim(True)
+                data = {**data, "claimed": True}
+            except KnxMonitorError as err:
+                _LOGGER.debug("Busclear: could not take over the MQTT entities again: %s", err)
         self._update_repairs(data)
         await self._update_silent(data)
         if self.has_events:

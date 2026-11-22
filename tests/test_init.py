@@ -187,3 +187,19 @@ async def test_failed_takeover_retries_later(hass: HomeAssistant, entry, aioclie
     # Not alongside the MQTT entities: no entities, Home Assistant retries.
     assert entry.state is ConfigEntryState.SETUP_RETRY
     assert hass.states.get("switch.busclear_recording") is None
+
+
+async def test_takes_over_again_after_the_server_gave_the_entities_back(hass: HomeAssistant, entry, addon) -> None:
+    """After an hour without a request the server releases the claim; the next poll takes it again."""
+    await _setup(hass, entry)
+
+    def claims() -> int:
+        return sum(1 for m, u, *_ in addon.mock_calls if m == "POST" and str(u).endswith("/api/ha/claim"))
+
+    assert claims() == 1
+    # The state still says "not claimed" (addon_state()), as after the release.
+    await entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    assert claims() == 2
+    assert entry.runtime_data.data["claimed"] is True
+    assert entry.runtime_data.last_update_success
